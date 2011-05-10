@@ -36,6 +36,7 @@
 #include <linux/mutex.h>
 #include <linux/cdev.h>
 #include <linux/regulator/consumer.h>
+#include <mach/socinfo.h>
 
 #include <asm/atomic.h>
 
