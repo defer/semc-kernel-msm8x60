@@ -49,10 +49,7 @@
 #define KGSL_PWRFLAGS_IRQ_ON		0x00000040
 #define KGSL_PWRFLAGS_IRQ_OFF		0x00000080
 
-#define KGSL_PWRLEVEL_TURBO 0
-#define KGSL_PWRLEVEL_NOMINAL 1
-#define KGSL_PWRLEVEL_LOW_OFFSET 2
-
+#define KGSL_DEFAULT_PWRLEVEL 1
 #define KGSL_MAX_CLKS 5
 
 struct platform_device;
@@ -96,8 +93,7 @@ void kgsl_check_suspended(struct kgsl_device *device);
 int kgsl_pwrctrl_sleep(struct kgsl_device *device);
 void kgsl_pwrctrl_wake(struct kgsl_device *device);
 unsigned long  kgsl_get_clkrate(struct clk *clk);
-void kgsl_pwrctrl_pwrlevel_change(struct kgsl_device *device,
-			unsigned int new_level);
+
 int kgsl_pwrctrl_init_sysfs(struct kgsl_device *device);
 void kgsl_pwrctrl_uninit_sysfs(struct kgsl_device *device);
 
