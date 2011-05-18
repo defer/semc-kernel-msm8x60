@@ -167,7 +167,6 @@ struct kgsl_mem_entry *kgsl_sharedmem_find_region(
 	size_t size);
 uint8_t *kgsl_sharedmem_convertaddr(struct kgsl_device *device,
 	unsigned int pt_base, unsigned int gpuaddr, unsigned int *size);
-int kgsl_setstate(struct kgsl_device *device, uint32_t flags);
 
 static inline void kgsl_regread(struct kgsl_device *device,
 				unsigned int offsetwords,
