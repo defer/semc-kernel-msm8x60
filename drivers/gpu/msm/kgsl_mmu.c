@@ -15,6 +15,7 @@
 #include <linux/spinlock.h>
 #include <linux/genalloc.h>
 #include <linux/slab.h>
+#include <linux/sched.h>
 #include <linux/io.h>
 #include <linux/bitmap.h>
 #include <asm/pgalloc.h>
