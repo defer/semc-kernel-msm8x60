@@ -126,6 +126,8 @@ struct kgsl_driver {
 		unsigned int vmalloc_max;
 		unsigned int coherent;
 		unsigned int coherent_max;
+    unsigned int mapped;
+    unsigned int mapped_max;
 		unsigned int histogram[16];
 	} stats;
 
@@ -135,8 +137,8 @@ struct kgsl_driver {
 
 extern struct kgsl_driver kgsl_driver;
 
-#define KGSL_VMALLOC_MEMORY 0
-#define KGSL_EXTERNAL_MEMORY 1
+#define KGSL_USER_MEMORY 1
+#define KGSL_MAPPED_MEMORY 2
 
 struct kgsl_mem_entry {
 	struct kref refcount;
