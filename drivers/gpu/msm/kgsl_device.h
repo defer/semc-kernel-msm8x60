@@ -107,8 +107,6 @@ struct kgsl_functable {
  		struct kgsl_context *context, struct kgsl_ibdesc *ibdesc,
  		unsigned int sizedwords, uint32_t *timestamp,
  		unsigned int flags);
- 	long (*ioctl) (struct kgsl_device_private *dev_priv,
- 		unsigned int cmd, void *data);
  	int (*setup_pt)(struct kgsl_device *device,
  		struct kgsl_pagetable *pagetable);
  	int (*cleanup_pt)(struct kgsl_device *device,
@@ -123,6 +121,8 @@ struct kgsl_functable {
  		uint32_t flags);
  	int (*drawctxt_destroy) (struct kgsl_device *device,
  		struct kgsl_context *context);
+  long (*ioctl) (struct kgsl_device_private *dev_priv,
++ 		unsigned int cmd, void *data);
 };
 
 struct kgsl_memregion {
