@@ -38,6 +38,7 @@
 #include <linux/idr.h>
 #include <linux/wakelock.h>
 #include <linux/pm_qos_params.h>
+#include <linux/earlysuspend.h>
 
 #include <asm/atomic.h>
 
@@ -168,6 +169,7 @@ struct kgsl_device {
 	struct completion recovery_gate;
 	struct dentry *d_debugfs;
 	struct idr context_idr;
+	struct early_suspend display_off;
 
 	/* Logging levels */
 	int cmd_log;
