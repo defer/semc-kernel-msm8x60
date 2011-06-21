@@ -58,7 +58,6 @@ struct platform_device;
 struct kgsl_pwrctrl {
 	int interrupt_num;
 	int have_irq;
-	unsigned int pwr_rail;
 	struct clk *ebi1_clk;
 	struct clk *grp_clks[KGSL_MAX_CLKS];
 	unsigned int power_flags;
