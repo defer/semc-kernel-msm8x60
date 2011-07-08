@@ -30,7 +30,6 @@
 #define __GSL_MMU_H
 #include <linux/types.h>
 #include <linux/msm_kgsl.h>
-#include "kgsl_sharedmem.h"
 
 /* Identifier for the global page table */
 /* Per process page tables will probably pass in the thread group
@@ -159,15 +158,6 @@ struct kgsl_ptpool_chunk {
 
 	unsigned long *bitmap;
 	struct list_head list;
-};
-
-struct kgsl_ptpool {
-	size_t ptsize;
-	struct mutex lock;
-	struct list_head list;
-	int entries;
-	int static_entries;
-	int chunks;
 };
 
 struct kgsl_pagetable *kgsl_mmu_getpagetable(unsigned long name);

@@ -25,6 +25,7 @@
 #include "kgsl.h"
 #include "kgsl_log.h"
 #include "kgsl_device.h"
+#include "kgsl_sharedmem.h"
 
 struct kgsl_pte_debug {
 	unsigned int read:1;

@@ -24,6 +24,7 @@
 #include "kgsl.h"
 #include "kgsl_log.h"
 #include "kgsl_cffdump.h"
+#include "kgsl_device.h"
 
 static struct kgsl_process_private *
 _get_priv_from_kobj(struct kobject *kobj)

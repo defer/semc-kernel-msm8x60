@@ -17,6 +17,7 @@
 #include "kgsl.h"
 #include "kgsl_pwrscale.h"
 #include "kgsl_log.h"
+#include "kgsl_device.h"
 
 #define GPU_SWFI_LATENCY	3
 
