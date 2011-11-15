@@ -47,6 +47,7 @@ struct mdp4_overlay_ctrl {
 	struct mdp4_pipe_desc ov_pipe[OVERLAY_PIPE_MAX];/* 4 */
 	struct mdp4_overlay_pipe plist[MDP4_MAX_PIPE];	/* 4 + 2 */
 	struct mdp4_overlay_pipe *stage[MDP4_MAX_MIXER][MDP4_MIXER_STAGE_MAX];
+	uint32 cs_controller;
 	uint32 panel_3d;
 	uint32 panel_mode;
 	uint32 mixer0_played;
@@ -66,6 +67,7 @@ struct mdp4_overlay_ctrl {
 				.share = 1,	/* VG 2 */
 			},
 		},
+	.cscontroller = CS_CONTROLLER_0,
 	.plist = {
 		{
 			.pipe_type = OVERLAY_TYPE_RGB,
@@ -512,6 +514,7 @@ void mdp4_overlay_vg_setup(struct mdp4_overlay_pipe *pipe)
 	char *vg_base;
 	uint32 frame_size, src_size, src_xy, dst_size, dst_xy;
 	uint32 format, pattern, luma_offset, chroma_offset;
+	uint32 mask;
 	int pnum, ptype;
 
 	pnum = pipe->pipe_num - OVERLAY_PIPE_VG1; /* start from 0 */
@@ -601,6 +604,24 @@ void mdp4_overlay_vg_setup(struct mdp4_overlay_pipe *pipe)
 			mdp4_ss_table_value(pipe->req_data.dpp.sharp_strength,
 									1));
 	}
+
+	if (mdp_rev > MDP_REV_41) {
+		/* mdp chip select controller */
+		mask = 0;
+		if (pipe->pipe_num == OVERLAY_PIPE_VG1)
+			mask = 0x020; /* bit 5 */
+		else if (pipe->pipe_num == OVERLAY_PIPE_VG2)
+			mask = 0x02000; /* bit 13 */
+		if (mask) {
+			if (pipe->op_mode & MDP4_OP_SCALEY_MN_PHASE)
+				ctrl->cs_controller &= ~mask;
+			else
+				ctrl->cs_controller |= mask;
+			/* NOT double buffered */
+			outpdw(MDP_BASE + 0x00c0, ctrl->cs_controller);
+		}
+	}
+
 
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 
