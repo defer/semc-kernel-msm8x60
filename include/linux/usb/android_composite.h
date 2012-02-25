@@ -95,7 +95,6 @@ struct usb_mass_storage_platform_data {
 	char *product;
 	int release;
 
-	char can_stall;
 	/* number of LUNS */
 	int nluns;
 
@@ -120,7 +119,7 @@ struct usb_ether_platform_data {
 
 extern void android_register_function(struct android_usb_function *f);
 
-extern int android_enable_function(struct usb_function *f, int enable);
+extern void android_enable_function(struct usb_function *f, int enable);
 
 #ifdef CONFIG_USB_ANDROID_GG
 extern void android_enable_usb_gg(void);

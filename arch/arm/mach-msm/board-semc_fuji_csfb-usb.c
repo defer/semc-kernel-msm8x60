@@ -420,7 +420,7 @@ static char *usb_functions_msc_adb_eng[] = {
 	"diag",
 };
 
-#if defined(CONFIG_USB_ANDROID_MTP_ARICENT)
+#if defined(CONFIG_USB_G_ANDROID)
 static char *usb_functions_mtp[] = {
 	"mtp",
 };
@@ -454,23 +454,23 @@ static char *usb_functions_rndis_adb[] = {
 };
 
 static char *usb_functions_all[] = {
-#ifdef CONFIG_USB_ANDROID_RNDIS
+#ifdef CONFIG_USB_G_ANDROID
 	"rndis",
 #endif
-#ifdef CONFIG_USB_ANDROID_DIAG
+#ifdef CONFIG_USB_G_ANDROID
 	"diag",
 	"diag_mdm",
 #endif
 	"adb",
-#ifdef CONFIG_USB_F_SERIAL
+#ifdef CONFIG_USB_G_ANDROID
 	"modem",
 	"nmea",
 #endif
-#ifdef CONFIG_USB_ANDROID_RMNET_SDIO
+#ifdef CONFIG_USB_G_ANDROID
 	"rmnet_sdio",
 #endif
 	"usb_mass_storage",
-#ifdef CONFIG_USB_ANDROID_ACM
+#ifdef CONFIG_USB_G_ANDROID
 	"acm",
 #endif
 };
@@ -502,7 +502,7 @@ static struct android_usb_product usb_products[] = {
 		.num_functions	= ARRAY_SIZE(usb_functions_msc_adb),
 		.functions	= usb_functions_msc_adb,
 	},
-#if defined(CONFIG_USB_ANDROID_MTP_ARICENT)
+#if defined(CONFIG_USB_G_ANDROID)
 	{
 		.product_id	= 0x0000 | CONFIG_USB_PRODUCT_SUFFIX,
 		.num_functions	= ARRAY_SIZE(usb_functions_mtp),
@@ -529,7 +529,7 @@ static struct android_usb_product usb_products[] = {
 		.num_functions	= ARRAY_SIZE(usb_functions_rndis_adb),
 		.functions	= usb_functions_rndis_adb,
 	},
-#if defined(CONFIG_USB_ANDROID_MTP_ARICENT)
+#if defined(CONFIG_USB_G_ANDROID)
 	{
 		.product_id	= 0x5146,
 		.num_functions	= ARRAY_SIZE(usb_functions_mtp_adb_eng),

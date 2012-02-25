@@ -2324,13 +2324,13 @@ static struct platform_device *fuji_devices[] __initdata = {
 #ifdef CONFIG_USB_GADGET_MSM_72K
 	&msm_device_gadget_peripheral,
 #endif
-#ifdef CONFIG_USB_ANDROID
+#ifdef CONFIG_USB_G_ANDROID
 	&semc_fuji_mass_storage_device,
 	&semc_fuji_rndis_device,
-#ifdef CONFIG_USB_ANDROID_DIAG
+#ifdef CONFIG_USB_G_ANDROID
 	&usb_diag_device,
 #endif
-#ifdef CONFIG_USB_F_SERIAL
+#ifdef CONFIG_USB_G_ANDROID
 	&usb_gadget_fserial_device,
 #endif
 	&semc_fuji_usb_device,

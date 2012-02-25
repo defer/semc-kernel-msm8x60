@@ -100,6 +100,10 @@ struct otg_transceiver;
 struct otg_io_access_ops {
 	int (*read)(struct otg_transceiver *otg, u32 reg);
 	int (*write)(struct otg_transceiver *otg, u32 val, u32 reg);
+#ifdef CONFIG_USB_MULTIPLE_CHARGER_DETECT
+	int (*read_with_reset)(struct otg_transceiver *otg, u32 reg);
+	int (*write_with_reset)(struct otg_transceiver *otg, u32 val, u32 reg);
+#endif
 };
 
 /*
@@ -192,10 +196,10 @@ static inline int otg_io_read(struct otg_transceiver *otg, u32 reg)
 	return -EINVAL;
 }
 
-static inline int otg_io_write(struct otg_transceiver *otg, u32 val, u32 reg)
+static inline int otg_io_write(struct otg_transceiver *otg, u32 reg, u32 val)
 {
 	if (otg->io_ops && otg->io_ops->write)
-		return otg->io_ops->write(otg, val, reg);
+		return otg->io_ops->write(otg, reg, val);
 
 	return -EINVAL;
 }

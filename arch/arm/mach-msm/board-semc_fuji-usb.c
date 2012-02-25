@@ -11,7 +11,7 @@
 #include <mach/mpp.h>
 #include <linux/gpio.h>
 #include <linux/usb/android_composite.h>
-#ifdef CONFIG_USB_ANDROID_ACCESSORY
+#ifdef CONFIG_USB_G_ANDROID
 #include <linux/usb/f_accessory.h>
 #endif
 #include <linux/mfd/pmic8058.h>
@@ -548,14 +548,14 @@ static char *usb_functions_msc[] = {
 	"usb_mass_storage",
 };
 
-#ifdef CONFIG_USB_ANDROID_ACCESSORY
+#ifdef CONFIG_USB_G_ANDROID
 static char *usb_functions_accessory[] = { "accessory" };
 static char *usb_functions_accessory_adb[] = { "accessory", "adb" };
 #endif
 
 static char *usb_functions_all[] = {
 	"rndis",
-#ifdef CONFIG_USB_ANDROID_ACCESSORY
+#ifdef CONFIG_USB_G_ANDROID
 	"accessory",
 #endif
 	"mtp",
@@ -632,7 +632,7 @@ static struct android_usb_product usb_products[] = {
 		.num_functions	= ARRAY_SIZE(usb_functions_msc),
 		.functions	= usb_functions_msc,
 	},
-#ifdef CONFIG_USB_ANDROID_ACCESSORY
+#ifdef CONFIG_USB_G_ANDROID
 	{
 		.vendor_id	= USB_ACCESSORY_VENDOR_ID,
 		.product_id	= USB_ACCESSORY_PRODUCT_ID,
@@ -710,7 +710,7 @@ struct platform_device semc_fuji_usb_device = {
 	},
 };
 
-#if defined(CONFIG_USB_ANDROID_GG)
+#if 0 && defined(CONFIG_USB_G_ANDROID)
 #define STARTUP_REASON_INDUS_LOG	(1<<29)
 #define GG_PID				0xD14C
 
@@ -755,7 +755,7 @@ static int __init startup_reason_setup(char *startup)
 			!(startup_reason & STARTUP_REASON_WDOG))
 			android_usb_pdata.product_id = 0xE000 |
 				CONFIG_USB_PRODUCT_SUFFIX;
-#if defined(CONFIG_USB_ANDROID_GG)
+#if 0&& defined(CONFIG_USB_G_ANDROID)
 		if (startup_reason & STARTUP_REASON_INDUS_LOG)
 			init_usb_gg();
 #endif
