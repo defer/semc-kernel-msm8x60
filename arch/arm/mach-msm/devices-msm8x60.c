@@ -609,7 +609,7 @@ static struct msm_bus_vectors grp3d_nominal_low_vectors[] = {
 		.src = MSM_BUS_MASTER_GRAPHICS_3D,
 		.dst = MSM_BUS_SLAVE_EBI_CH0,
 		.ab = 0,
-		.ib = 1300000000U,
+		.ib = 1397000000U,
 	},
 };
 
