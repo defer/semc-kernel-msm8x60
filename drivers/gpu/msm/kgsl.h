@@ -36,7 +36,6 @@
 #include <linux/mutex.h>
 #include <linux/cdev.h>
 #include <linux/regulator/consumer.h>
-#include <mach/socinfo.h>
 
 #include "kgsl_device.h"
 #include "kgsl_sharedmem.h"
