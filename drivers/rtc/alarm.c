@@ -67,6 +67,7 @@ static struct wake_lock alarm_rtc_wake_lock;
 static struct platform_device *alarm_platform_dev;
 struct alarm_queue alarms[ANDROID_ALARM_TYPE_COUNT];
 static bool suspended;
+static struct rtc_wkalrm rtc_alarm;
 
 static void update_timer_locked(struct alarm_queue *base, bool head_removed)
 {
@@ -393,7 +394,6 @@ static int alarm_suspend(struct platform_device *pdev, pm_message_t state)
 {
 	int                 err = 0;
 	unsigned long       flags;
-	struct rtc_wkalrm   rtc_alarm;
 	struct rtc_time     rtc_current_rtc_time;
 	unsigned long       rtc_current_time;
 	unsigned long       rtc_alarm_time;
@@ -443,7 +443,6 @@ static int alarm_suspend(struct platform_device *pdev, pm_message_t state)
 			rtc_delta.tv_sec, rtc_delta.tv_nsec);
 		if (rtc_current_time + 1 >= rtc_alarm_time) {
 			pr_alarm(SUSPEND, "alarm about to go off\n");
-			memset(&rtc_alarm, 0, sizeof(rtc_alarm));
 			rtc_alarm.enabled = 0;
 			rtc_set_alarm(alarm_rtc_dev, &rtc_alarm);
 
@@ -463,14 +462,13 @@ static int alarm_suspend(struct platform_device *pdev, pm_message_t state)
 
 static int alarm_resume(struct platform_device *pdev)
 {
-	struct rtc_wkalrm alarm;
 	unsigned long       flags;
 
 	pr_alarm(SUSPEND, "alarm_resume(%p)\n", pdev);
 
-	memset(&alarm, 0, sizeof(alarm));
-	alarm.enabled = 0;
-	rtc_set_alarm(alarm_rtc_dev, &alarm);
+	rtc_alarm.enabled = 0;
+	rtc_set_alarm(alarm_rtc_dev, &rtc_alarm);
+	memset(&rtc_alarm, 0, sizeof(rtc_alarm));
 
 	spin_lock_irqsave(&alarm_slock, flags);
 	suspended = false;

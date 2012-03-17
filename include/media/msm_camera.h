@@ -1,4 +1,5 @@
 /* Copyright (c) 2011, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -555,11 +556,18 @@ struct msm_snapshot_pp_status {
 #define CFG_GET_PICT_P_PL		25
 #define CFG_GET_AF_MAX_STEPS		26
 #define CFG_GET_PICT_MAX_EXP_LC		27
-#define CFG_SEND_WB_INFO    28
-#define CFG_SENSOR_INIT    29
-#define CFG_GET_3D_CALI_DATA 30
+#define CFG_SEND_WB_INFO		28
+#define CFG_SENSOR_INIT			29
+#define CFG_GET_3D_CALI_DATA		30
 #define CFG_GET_CALIB_DATA		31
-#define CFG_MAX			32
+/* extension begin */
+#define CFG_GPIO_CTRL			32
+#define CFG_I2C_WRITE			33
+#define CFG_I2C_READ			34
+#define CFG_CSI_CTRL			35
+#define CFG_ROM_READ			36
+/* extension end */
+#define CFG_MAX				37
 
 
 #define MOVE_NEAR	0
@@ -613,6 +621,54 @@ struct wb_info_cfg {
 	uint16_t green_gain;
 	uint16_t blue_gain;
 };
+
+/* extension begin */
+enum sensor_gpio_ctrl_type {
+	SENSOR_GPIO_CTRL_RESET,
+	SENSOR_GPIO_CTRL_STANBY,
+};
+
+struct sensor_gpio_ctrl {
+	enum sensor_gpio_ctrl_type gpio;
+	int value;
+};
+
+enum sensor_i2c_addr_type {
+	SENSOR_I2C_ADDR_0BYTE = 0,
+	SENSOR_I2C_ADDR_1BYTE = 1,
+	SENSOR_I2C_ADDR_2BYTE = 2,
+	SENSOR_I2C_ADDR_4BYTE = 4,
+};
+
+struct sensor_i2c_io {
+	uint8_t slave_addr;
+	uint32_t address;
+	enum sensor_i2c_addr_type address_type;
+	uint8_t length;
+	uint8_t __user *data;
+};
+
+enum sensor_csi_data_format {
+	SENSOR_CSI_DATA_8BIT,
+	SENSOR_CSI_DATA_10BIT,
+	SENSOR_CSI_DATA_12BIT,
+};
+
+struct sensor_csi_params {
+	enum sensor_csi_data_format data_format;
+	uint8_t lane_cnt;
+	uint8_t lane_assign;
+	uint8_t settle_cnt;
+	uint8_t dpcm_scheme;
+};
+
+struct sensor_rom_in {
+	uint16_t address;
+	uint16_t length;
+	uint8_t __user *data;
+};
+/* extension end */
+
 struct sensor_3d_exp_cfg {
 	uint16_t gain;
 	uint32_t line;
@@ -689,6 +745,12 @@ struct sensor_cfg_data {
 		struct wb_info_cfg wb_info;
 		struct sensor_3d_exp_cfg sensor_3d_exp;
 		struct sensor_calib_data calib_info;
+		/* extension begin */
+		struct sensor_gpio_ctrl gpio_ctrl;
+		struct sensor_i2c_io i2c_io;
+		struct sensor_csi_params csi_ctrl;
+		struct sensor_rom_in rom_in;
+		/* extension end */
 	} cfg;
 };
 

@@ -155,9 +155,9 @@ void hci_setup_sync(struct hci_conn *conn, __u16 handle)
 
 	cp.tx_bandwidth   = cpu_to_le32(0x00001f40);
 	cp.rx_bandwidth   = cpu_to_le32(0x00001f40);
-	cp.max_latency    = cpu_to_le16(0x000A);
+	cp.max_latency    = cpu_to_le16(0xffff);
 	cp.voice_setting  = cpu_to_le16(hdev->voice_setting);
-	cp.retrans_effort = 0x01;
+	cp.retrans_effort = 0xff;
 
 	hci_send_cmd(hdev, HCI_OP_SETUP_SYNC_CONN, sizeof(cp), &cp);
 }
@@ -204,6 +204,14 @@ static void hci_conn_timeout(unsigned long arg)
 		break;
 	case BT_CONFIG:
 	case BT_CONNECTED:
+		if (conn->type != ACL_LINK) {
+			struct hci_conn *acl = conn->link;
+			if (acl) {
+				acl->power_save = 1;
+				hci_conn_enter_active_mode(acl, 1);
+			}
+		}
+
 		reason = hci_proto_disconn_ind(conn);
 		hci_acl_disconn(conn, reason);
 		break;
@@ -504,11 +512,6 @@ struct hci_conn *hci_connect(struct hci_dev *hdev, int type,
 		acl->sec_level = sec_level;
 		acl->auth_type = auth_type;
 		hci_acl_connect(acl);
-	} else {
-		if (acl->sec_level < sec_level)
-			acl->sec_level = sec_level;
-		if (acl->auth_type < auth_type)
-			acl->auth_type = auth_type;
 	}
 
 	if (type == ACL_LINK)

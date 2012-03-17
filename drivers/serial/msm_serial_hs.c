@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2008 Google Inc.
  * Copyright (c) 2007-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  * Modified: Nick Pelly <npelly@google.com>
  *
  * All source code in this file is licensed under the following license
@@ -157,6 +158,9 @@ struct msm_hs_port {
 
 	struct msm_hs_wakeup wakeup;
 	struct wake_lock dma_wake_lock;  /* held while any DMA active */
+
+	void (*exit_lpm_cb)(struct uart_port *);
+	int (*pre_startup)(struct uart_port *);
 };
 
 #define MSM_UARTDM_BURST_SIZE 16   /* DM burst size (in bytes) */
@@ -538,6 +542,7 @@ static void msm_hs_set_bps_locked(struct uart_port *uport,
 	case 3500000:
 	case 3000000:
 	case 2500000:
+	case 2000000:
 	case 1500000:
 	case 1152000:
 	case 1000000:
@@ -1068,6 +1073,9 @@ static void msm_hs_start_tx_locked(struct uart_port *uport )
 
 	clk_enable(msm_uport->clk);
 
+	if(msm_uport->exit_lpm_cb)
+		msm_uport->exit_lpm_cb(uport);
+
 	if (msm_uport->tx.tx_ready_int_en == 0) {
 		msm_uport->tx.tx_ready_int_en = 1;
 		if (msm_uport->tx.dma_in_flight == 0)
@@ -1450,11 +1458,10 @@ static irqreturn_t msm_hs_isr(int irq, void *dev)
 }
 
 /* request to turn off uart clock once pending TX is flushed */
-void msm_hs_request_clock_off(struct uart_port *uport) {
-	unsigned long flags;
+void msm_hs_request_clock_off_locked(struct uart_port *uport)
+{
 	struct msm_hs_port *msm_uport = UARTDM_TO_MSM(uport);
 
-	spin_lock_irqsave(&uport->lock, flags);
 	if (msm_uport->clk_state == MSM_HS_CLK_ON) {
 		msm_uport->clk_state = MSM_HS_CLK_REQUEST_OFF;
 		msm_uport->clk_req_off_state = CLK_REQ_OFF_START;
@@ -1466,11 +1473,21 @@ void msm_hs_request_clock_off(struct uart_port *uport) {
 		 */
 		dsb();
 	}
+}
+EXPORT_SYMBOL(msm_hs_request_clock_off_locked);
+
+/* request to turn off uart clock once pending TX is flushed */
+void msm_hs_request_clock_off(struct uart_port *uport)
+{
+	unsigned long flags;
+	spin_lock_irqsave(&uport->lock, flags);
+	msm_hs_request_clock_off_locked(uport);
 	spin_unlock_irqrestore(&uport->lock, flags);
 }
 EXPORT_SYMBOL(msm_hs_request_clock_off);
 
-static void msm_hs_request_clock_on_locked(struct uart_port *uport) {
+void msm_hs_request_clock_on_locked(struct uart_port *uport)
+{
 	struct msm_hs_port *msm_uport = UARTDM_TO_MSM(uport);
 	unsigned int data;
 	int ret = 0;
@@ -1511,8 +1528,9 @@ static void msm_hs_request_clock_on_locked(struct uart_port *uport) {
 		break;
 	}
 }
-
-void msm_hs_request_clock_on(struct uart_port *uport) {
+EXPORT_SYMBOL(msm_hs_request_clock_on_locked);
+void msm_hs_request_clock_on(struct uart_port *uport)
+{
 	unsigned long flags;
 	spin_lock_irqsave(&uport->lock, flags);
 	msm_hs_request_clock_on_locked(uport);
@@ -1572,6 +1590,15 @@ static int msm_hs_startup(struct uart_port *uport)
 	struct msm_hs_port *msm_uport = UARTDM_TO_MSM(uport);
 	struct circ_buf *tx_buf = &uport->state->xmit;
 	struct msm_hs_tx *tx = &msm_uport->tx;
+
+	if (msm_uport->pre_startup) {
+		ret = (msm_uport->pre_startup)(uport);
+		if (ret) {
+			pr_err("%s: pre-process failed (line%d)\n",
+							__func__, uport->line);
+			return ret;
+		}
+	}
 
 	rfr_level = uport->fifosize;
 	if (rfr_level > 16)
@@ -1849,6 +1876,14 @@ static int __init msm_hs_probe(struct platform_device *pdev)
 				dev_err(uport->dev, "Cannot configure"
 					"gpios\n");
 	}
+
+	if (pdata == NULL)
+		msm_uport->exit_lpm_cb = NULL;
+	else
+		msm_uport->exit_lpm_cb = pdata->exit_lpm_cb;
+
+	if (pdata && pdata->pre_startup)
+		msm_uport->pre_startup = pdata->pre_startup;
 
 	resource = platform_get_resource_byname(pdev, IORESOURCE_DMA,
 						"uartdm_channels");

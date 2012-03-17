@@ -166,7 +166,7 @@
 
 #define MCI_FIFOHALFSIZE (MCI_FIFOSIZE / 2)
 
-#define NR_SG		32
+#define NR_SG		128
 
 #define MSM_MMC_IDLE_TIMEOUT	10000 /* msecs */
 
@@ -258,7 +258,6 @@ struct msmsdcc_host {
 
 	struct tasklet_struct 	dma_tlet;
 
-	unsigned int prog_scan;
 	unsigned int prog_enable;
 
 	/* Command parameters */

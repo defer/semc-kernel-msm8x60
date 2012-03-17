@@ -1,4 +1,5 @@
 /* Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -228,6 +229,7 @@ struct msm_sensor_ctrl {
 	int (*s_config)(void __user *);
 	enum msm_camera_type s_camera_type;
 	uint32_t s_mount_angle;
+	int (*s_get_capture_started)(void);
 	enum msm_st_frame_packing s_video_packing;
 	enum msm_st_frame_packing s_snap_packing;
 };
@@ -296,6 +298,9 @@ struct msm_sync {
 	struct msm_camvpe_fn vpefn;
 	struct msm_sensor_ctrl sctrl;
 	struct msm_strobe_flash_ctrl sfctrl;
+#if defined(CONFIG_SEMC_CAMERA_MODULE) || defined(CONFIG_SEMC_SUB_CAMERA_MODULE)
+	struct wake_lock suspend_lock;
+#endif
 	struct wake_lock wake_lock;
 	struct platform_device *pdev;
 	int16_t ignore_qcmd_type;

@@ -387,7 +387,8 @@ static int msm_gpio_irq_set_type(unsigned int irq, unsigned int flow_type)
 	dsb();
 	spin_unlock_irqrestore(&tlmm_lock, irq_flags);
 #ifdef CONFIG_MSM_RPM
-	msm_mpm_set_irq_type(irq, flow_type);
+	if (!((flow_type & IRQ_TYPE_EDGE_BOTH) == IRQ_TYPE_EDGE_BOTH))
+		msm_mpm_set_irq_type(irq, flow_type);
 #endif
 
 	return 0;

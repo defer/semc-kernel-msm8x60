@@ -61,6 +61,10 @@ static void evdev_pass_event(struct evdev_client *client,
 	wake_lock_timeout(&client->wake_lock, 5 * HZ);
 	client->buffer[client->head++] = *event;
 	client->head &= EVDEV_BUFFER_SIZE - 1;
+	if (unlikely(client->head == client->tail)) {
+		client->tail++;
+		client->tail &= EVDEV_BUFFER_SIZE - 1;
+	}
 	spin_unlock(&client->buffer_lock);
 
 	if (event->type == EV_SYN)
@@ -294,8 +298,8 @@ static int evdev_open(struct inode *inode, struct file *file)
 	return 0;
 
  err_free_client:
-	wake_lock_destroy(&client->wake_lock);
 	evdev_detach_client(evdev, client);
+	wake_lock_destroy(&client->wake_lock);
 	kfree(client);
  err_put_evdev:
 	put_device(&evdev->dev);

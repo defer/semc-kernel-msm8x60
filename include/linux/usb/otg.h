@@ -61,6 +61,20 @@ enum usb_otg_event {
 	 * within TB_SRP_FAIL time.
 	 */
 	OTG_EVENT_NO_RESP_FOR_SRP,
+#ifdef CONFIG_USB_OTG_NOTIFICATION
+	/* OTG driver detects the ACA
+	 * by checking ID pin status.
+	 */
+	OTG_EVENT_ACA_CONNECTED,
+	/* OTG driver detect the ACA
+	 * disconnected.
+	 */
+	OTG_EVENT_ACA_DISCONNECTED,
+	/* VBUS supply is stopped
+	 * due to HW failure.
+	 */
+	OTG_EVENT_VBUS_DROP,
+#endif
 };
 
 enum usb_xceiv_events {

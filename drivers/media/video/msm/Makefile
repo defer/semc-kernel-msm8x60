@@ -37,3 +37,7 @@ obj-$(CONFIG_MT9D112) += mt9d112.o mt9d112_reg.o
 
 obj-$(CONFIG_MT9D113) += mt9d113.o mt9d113_reg.o
 obj-$(CONFIG_MSM_GEMINI) += msm_gemini_dev.o msm_gemini_sync.o msm_gemini_core.o msm_gemini_hw.o msm_gemini_platform.o
+obj-$(CONFIG_SEMC_CAMERA_MODULE) += semc_camera_module.o
+obj-$(CONFIG_SEMC_SUB_CAMERA_MODULE) += semc_sub_camera_module.o
+obj-$(CONFIG_MSM_VPE) += msm_vpe1.o
+obj-$(CONFIG_MSM_VPE_STANDALONE) += msm_vpe1_standalone.o

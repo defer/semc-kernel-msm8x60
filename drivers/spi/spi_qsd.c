@@ -2074,8 +2074,14 @@ skip_dma_resources:
 	INIT_LIST_HEAD(&dd->queue);
 	INIT_WORK(&dd->work_data, msm_spi_workq);
 	init_waitqueue_head(&dd->continue_suspend);
+
+#ifdef CONFIG_SPI_QSD_RTQUEUE
+	dd->workqueue = __create_workqueue(
+		dev_name(master->dev.parent), 1, 0, 1);
+#else
 	dd->workqueue = create_singlethread_workqueue(
 		dev_name(master->dev.parent));
+#endif
 	if (!dd->workqueue)
 		goto err_probe_workq;
 

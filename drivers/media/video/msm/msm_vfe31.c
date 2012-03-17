@@ -1,4 +1,5 @@
 /* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -26,7 +27,9 @@
 #include <asm/atomic.h>
 
 #include "msm_vfe31.h"
+#ifdef CONFIG_MSM_VPE
 #include "msm_vpe1.h"
+#endif
 
 atomic_t irq_cnt;
 
@@ -1001,9 +1004,10 @@ static int vfe31_operation_config(uint32_t *cmd)
 	uint32_t *p = cmd;
 
 	vfe31_ctrl->operation_mode = *p;
+#ifdef CONFIG_MSM_VPE
 	vpe_ctrl->pad_2k_bool = (vfe31_ctrl->operation_mode & 1) ?
 		FALSE : TRUE;
-
+#endif
 	vfe31_ctrl->stats_comp = *(++p);
 	vfe31_ctrl->hfr_mode = *(++p);
 
@@ -2387,6 +2391,7 @@ static void vfe31_process_reg_update_irq(void)
 				20 + 24 * (vfe31_ctrl->outpath.out2.ch1));
 		}
 		vfe31_ctrl->recording_state = VFE_REC_STATE_STARTED;
+#ifdef CONFIG_MSM_VPE
 		if (vpe_ctrl->dis_en) {
 			old_val = msm_io_r(
 				vfe31_ctrl->vfebase + VFE_MODULE_CFG);
@@ -2396,6 +2401,7 @@ static void vfe31_process_reg_update_irq(void)
 		}
 		msm_io_w_mb(1, vfe31_ctrl->vfebase + VFE_REG_UPDATE_CMD);
 		CDBG("start video triggered .\n");
+#endif
 	} else if (vfe31_ctrl->recording_state
 			== VFE_REC_STATE_STOP_REQUESTED) {
 		if (vfe31_ctrl->outpath.output_mode & VFE31_OUTPUT_MODE_V) {
@@ -3180,13 +3186,14 @@ static void vfe31_process_stats(void)
 
 static void vfe31_process_stats_irq(uint32_t *irqstatus)
 {
+#if 0 /* TODO: for 3130_integration */
 	/* Subsample the stats according to the hfr speed*/
 	if ((vfe31_ctrl->hfr_mode != HFR_MODE_OFF) &&
 		(vfe31_ctrl->vfeFrameId % vfe31_ctrl->hfr_mode != 0)) {
 		CDBG("Skip the stats when HFR enabled\n");
 		return;
 	}
-
+#endif
 	vfe31_ctrl->status_bits = VFE_COM_STATUS & *irqstatus;
 	vfe31_process_stats();
 	return;
@@ -3274,8 +3281,18 @@ static void vfe31_do_tasklet(unsigned long data)
 				if (qcmd->vfeInterruptStatus0 &
 					VFE_IRQ_STATUS0_STATS_COMPOSIT_MASK) {
 					CDBG("Stats composite irq occured.\n");
+#if 1 /* TODO: for 3130_integration */
+					if ((vfe31_ctrl->hfr_mode != HFR_MODE_OFF) &&
+						(vfe31_ctrl->vfeFrameId % vfe31_ctrl->hfr_mode != 0)) {
+						CDBG("Skip the stats when HFR enabled\n");
+					} else 	{
+						vfe31_process_stats_irq(
+							&qcmd->vfeInterruptStatus0);
+					}
+#else
 					vfe31_process_stats_irq(
 						&qcmd->vfeInterruptStatus0);
+#endif
 				}
 			} else {
 				/* process individual stats interrupt. */
@@ -3402,7 +3419,9 @@ static void vfe31_release(struct platform_device *pdev)
 	vfemem = vfe31_ctrl->vfemem;
 	vfeio  = vfe31_ctrl->vfeio;
 
+#ifdef CONFIG_MSM_VPE
 	msm_vpe_release();
+#endif
 
 	kfree(vfe31_ctrl->extdata);
 	iounmap(vfe31_ctrl->vfebase);
@@ -3520,9 +3539,10 @@ static int vfe31_init(struct msm_vfe_callback *presp,
 	/* Bring up all the required GPIOs and Clocks */
 	rc = msm_camio_enable(pdev);
 	msm_camio_set_perf_lvl(S_INIT);
+#ifdef CONFIG_MSM_VPE
 	if (msm_vpe_open() < 0)
 		CDBG("%s: vpe_open failed\n", __func__);
-
+#endif
 	/* TO DO: Need to release the VFE resources */
 	rc = request_irq(vfe31_ctrl->vfeirq, vfe31_parse_irq,
 			IRQF_TRIGGER_RISING, "vfe", 0);
@@ -3543,11 +3563,21 @@ void msm_camvfe_fn_init(struct msm_camvfe_fn *fptr, void *data)
 
 void msm_camvpe_fn_init(struct msm_camvpe_fn *fptr, void *data)
 {
+#ifdef CONFIG_MSM_VPE_STANDALONE
+	fptr->vpe_reg		= NULL;
+	fptr->send_frame_to_vpe	= NULL;
+	fptr->vpe_config	= NULL;
+	fptr->vpe_cfg_update	= NULL;
+	fptr->dis		= NULL;
+#else
 	fptr->vpe_reg		= msm_vpe_reg;
 	fptr->send_frame_to_vpe	= msm_send_frame_to_vpe;
 	fptr->vpe_config	= msm_vpe_config;
 	fptr->vpe_cfg_update	= msm_vpe_cfg_update;
 	fptr->dis		= &(vpe_ctrl->dis_en);
 	fptr->vpe_cfg_offset = msm_vpe_offset_update;
+#endif
+#ifdef CONFIG_MSM_VPE
 	vpe_ctrl->syncdata = data;
+#endif
 }

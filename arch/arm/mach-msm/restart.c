@@ -29,6 +29,8 @@
 #include <linux/mfd/pmic8058.h>
 #include <linux/mfd/pmic8901.h>
 
+#include <asm/proc-fns.h>
+#include <mach/system.h>
 #include <mach/msm_iomap.h>
 #include <mach/restart.h>
 #include <mach/scm-io.h>
@@ -59,6 +61,8 @@ void *restart_reason;
 int pmic_reset_irq;
 
 #ifdef CONFIG_MSM_DLOAD_MODE
+#include <linux/console.h>
+
 static int in_panic;
 static void *dload_mode_addr;
 
@@ -68,10 +72,24 @@ static int download_mode = 1;
 module_param_call(download_mode, dload_set, param_get_int,
 			&download_mode, 0644);
 
+static void msm_panic_restart(char mode, const char *cmd)
+{
+	if (is_console_locked())
+		release_console_sem();
+
+	cpu_proc_fin();
+	arch_reset(mode, cmd);
+	mdelay(1000);
+	printk("Reboot failed -- System halted\n");
+	while (1)
+		;
+}
+
 static int panic_prep_restart(struct notifier_block *this,
 			      unsigned long event, void *ptr)
 {
 	in_panic = 1;
+	arm_pm_restart = msm_panic_restart;
 	return NOTIFY_DONE;
 }
 
@@ -221,10 +239,17 @@ void arch_reset(char mode, const char *cmd)
 			writel(0x77665501, restart_reason);
 		}
 	}
+#ifdef CONFIG_MSM_DLOAD_MODE
+	else if (in_panic) {
+		writel(0xC0DEDEAD, restart_reason);
+	}
+#endif
+	else
+		writel(0x776655AA, restart_reason);
 
 	writel(0, WDT0_EN);
 	if (!(machine_is_msm8x60_charm_surf() ||
-	      machine_is_msm8x60_charm_ffa())) {
+		machine_is_msm8x60_charm_ffa())) {
 		dsb();
 		writel(0, PSHOLD_CTL_SU); /* Actually reset the chip */
 		mdelay(5000);

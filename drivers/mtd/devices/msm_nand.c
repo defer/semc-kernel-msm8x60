@@ -742,6 +742,8 @@ uint32_t flash_onfi_probe(struct msm_nand_chip *chip)
 				supported_flash.density  =
 					onfi_param_page_ptr->
 					number_of_blocks_per_logical_unit
+				    * onfi_param_page_ptr->
+				      number_of_logical_units
 					* supported_flash.blksize;
 				supported_flash.ecc_correctability =
 					onfi_param_page_ptr->
@@ -1897,7 +1899,7 @@ static int msm_nand_read_oob_dualnandc(struct mtd_info *mtd, loff_t from,
 					total_ecc_errors += ecc_errors;
 					/* not thread safe */
 					mtd->ecc_stats.corrected += ecc_errors;
-					if (ecc_errors > 1)
+					if (ecc_errors > 2)
 						pageerr = -EUCLEAN;
 				}
 			}
@@ -7022,10 +7024,6 @@ no_dual_nand_ctlr_support:
 	info->mtd.name = dev_name(&pdev->dev);
 	info->mtd.priv = &info->msm_nand;
 	info->mtd.owner = THIS_MODULE;
-
-	/* config ebi2_cfg register only for ping pong mode!!! */
-	if (!interleave_enable && dual_nand_ctlr_present)
-		flash_wr_reg(&info->msm_nand, EBI2_CFG_REG, 0x4010080);
 
 	if (dual_nand_ctlr_present)
 		msm_nand_nc10_xfr_settings(&info->mtd);

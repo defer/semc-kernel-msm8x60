@@ -1,4 +1,5 @@
 /* Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -32,6 +33,7 @@
 #include <linux/slab.h>
 #include <linux/debugfs.h>
 #include <linux/sysdev.h>
+#include <asm/atomic.h>
 
 /* PMIC8058 Revision */
 #define SSBI_REG_REV			0x002  /* PMIC4 revision */
@@ -179,6 +181,8 @@ static struct pm8058_dbg_device *pmic_dbg_device;
 #endif
 
 static struct pm8058_chip *pmic_chip;
+static atomic_t pm8058_suspend_lock = ATOMIC_INIT(0);
+static atomic_t pm8058_init_lock = ATOMIC_INIT(1);
 
 /* Helper Functions */
 DEFINE_RATELIMIT_STATE(pm8058_msg_ratelimit, 60 * HZ, 10);
@@ -312,6 +316,32 @@ int pm8058_write(struct pm8058_chip *chip, u16 addr, u8 *values,
 	return ssbi_write(chip->dev, addr, values, len);
 }
 EXPORT_SYMBOL(pm8058_write);
+
+int pmic8058_read(u16 addr, u8 *values, unsigned int len)
+{
+	if (atomic_read(&pm8058_init_lock))
+		return -ENODEV;
+	if (!atomic_cmpxchg(&pm8058_suspend_lock, 0, 1)) {
+		int ret = ssbi_read(pmic_chip->dev, addr, values, len);
+		atomic_set(&pm8058_suspend_lock, 0);
+		return ret;
+	}
+	return -EAGAIN;
+}
+EXPORT_SYMBOL(pmic8058_read);
+
+int pmic8058_write(u16 addr, u8 *values, unsigned int len)
+{
+	if (atomic_read(&pm8058_init_lock))
+		return -ENODEV;
+	if (!atomic_cmpxchg(&pm8058_suspend_lock, 0, 1)) {
+		int ret = ssbi_write(pmic_chip->dev, addr, values, len);
+		atomic_set(&pm8058_suspend_lock, 0);
+		return ret;
+	}
+	return -EAGAIN;
+}
+EXPORT_SYMBOL(pmic8058_write);
 
 int pm8058_misc_control(struct pm8058_chip *chip, int mask, int flag)
 {
@@ -1323,6 +1353,9 @@ static int pm8058_probe(struct i2c_client *client,
 		return -ENOMEM;
 	}
 
+	for (i = 0; i < MAX_PM_IRQ; i++)
+		chip->config[i] = PM8058_IRQF_MASK_ALL;
+
 	chip->dev = client;
 
 	/* Read PMIC chip revision */
@@ -1391,6 +1424,15 @@ static int pm8058_probe(struct i2c_client *client,
 	if (rc < 0)
 		pr_err("%s: could not set up debugfs: %d\n", __func__, rc);
 
+	/* temporary fix for XO warm-up time */
+	rc = pm8058_masked_write(0x2C, 0xC5, 0xFF);
+	if (rc < 0)
+		pr_err("%s: could not write to 0x2C: %d\n", __func__, rc);
+	rc = pm8058_masked_write(0x2D, 0x0, 0x70);
+	if (rc < 0)
+		pr_err("%s: could not write to 0x2D: %d\n", __func__, rc);
+
+	atomic_set(&pm8058_init_lock, 0);
 	return 0;
 }
 
@@ -1423,8 +1465,11 @@ static int pm8058_suspend(struct sys_device *dev,
 	struct pm8058_chip *chip = pmic_chip;
 	int	i, irq;
 
+	if (atomic_cmpxchg(&pm8058_suspend_lock, 0, 1))
+		return -EAGAIN;
+
 	for (i = 0; i < MAX_PM_IRQ; i++) {
-		if (chip->config[i] && !chip->wake_enable[i]) {
+		if (!chip->wake_enable[i]) {
 			if (!((chip->config[i] & PM8058_IRQF_MASK_ALL)
 			      == PM8058_IRQF_MASK_ALL)) {
 				irq = i + chip->pdata.irq_base;
@@ -1465,7 +1510,7 @@ static int pm8058_resume(struct sys_device *dev)
 	int	i, irq;
 
 	for (i = 0; i < MAX_PM_IRQ; i++) {
-		if (chip->config[i] && !chip->wake_enable[i]) {
+		if (!chip->wake_enable[i]) {
 			if (!((chip->config[i] & PM8058_IRQF_MASK_ALL)
 				== PM8058_IRQF_MASK_ALL)) {
 				irq = i + chip->pdata.irq_base;
@@ -1479,6 +1524,7 @@ static int pm8058_resume(struct sys_device *dev)
 	if (!chip->count_wakeable)
 		enable_irq(chip->dev->irq);
 
+	atomic_set(&pm8058_suspend_lock, 0);
 	return 0;
 }
 #else

@@ -293,7 +293,7 @@ static void subsys_modem_crash_shutdown(const char * const crashed_subsys)
 	}
 
 	/* Wait for 5ms to allow the modem to clean up caches etc. */
-	usleep(5000);
+	mdelay(5);
 }
 
 /* Non-subsystem-specific functions */

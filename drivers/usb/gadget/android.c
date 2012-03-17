@@ -4,6 +4,7 @@
  * Copyright (C) 2008 Google, Inc.
  * Copyright (c) 2009-2010, Code Aurora Forum. All rights reserved.
  * Author: Mike Lockwood <lockwood@android.com>
+ * Copyright (C) 2010-2011 Sony Ericsson Mobile Communications AB.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -130,6 +131,14 @@ static int _registered_function_count = 0;
 
 static void android_set_default_product(int product_id);
 
+#ifdef CONFIG_USB_ANDROID_GG
+static u8 usb_gg;
+void android_enable_usb_gg(void)
+{
+	usb_gg = 1;
+}
+#endif
+
 void android_usb_set_connected(int connected)
 {
 	if (_android_dev && _android_dev->cdev && _android_dev->cdev->gadget) {
@@ -221,17 +230,30 @@ static int product_has_function(struct android_usb_product *p,
 	int count = p->num_functions;
 	const char *name = f->name;
 	int i;
+	int result = 0;
 
 	for (i = 0; i < count; i++) {
-		if (!strcmp(name, *functions++))
-			return 1;
+		if (!strcmp(name, *functions++)) {
+			if (!f->disabled &&
+				!strcmp(name, "usb_mass_storage")) {
+				result =
+				(p->msc_mode == android_get_msc_mode(f->dev));
+				break;
+			}
+			result = 1;
+			break;
+		}
 	}
-	return 0;
+	return result;
 }
 
 static int product_matches_functions(struct android_usb_product *p)
 {
 	struct usb_function		*f;
+
+	if (list_empty(&android_config_driver.functions))
+		return 0;
+
 	list_for_each_entry(f, &android_config_driver.functions, list) {
 		if (product_has_function(p, f) == !!f->disabled)
 			return 0;
@@ -514,9 +536,14 @@ void update_dev_desc(struct android_dev *dev)
 
 static char *sysfs_allowed[] = {
 	"rndis",
+	"accessory",
+	"usb_mass_storage",
 	"mtp",
 	"adb",
-	"accessory",
+	"modem",
+	"nmea",
+	"diag",
+	"diag_mdm",
 #ifdef CONFIG_USB_ANDROID_CCID
 	"ccid",
 #endif
@@ -539,6 +566,11 @@ int android_enable_function(struct usb_function *f, int enable)
 {
 	struct android_dev *dev = _android_dev;
 	int disable = !enable;
+
+#ifdef CONFIG_USB_ANDROID_GG
+	if (usb_gg)
+		return 0;
+#endif
 
 	if (!is_sysfschange_allowed(f))
 		return -EINVAL;
@@ -569,8 +601,17 @@ int android_enable_function(struct usb_function *f, int enable)
 		}
 #endif
 #ifdef CONFIG_USB_ANDROID_ACCESSORY
-		if (!strncmp(f->name, "accessory", 32))
-			android_config_functions(f, enable);
+		if (!strcmp(f->name, "accessory") && enable) {
+			struct usb_function		*func;
+
+		    /* disable everything else (and keep adb for now) */
+			list_for_each_entry(func, &android_config_driver.functions, list) {
+				if (strcmp(func->name, "accessory")
+					&& strcmp(func->name, "adb")) {
+					usb_function_set_enabled(func, 0);
+				}
+			}
+        }
 #endif
 #ifdef CONFIG_USB_ANDROID_CCID
 		if (!strncmp(f->name, "ccid", 4))
@@ -589,7 +630,11 @@ int android_enable_function(struct usb_function *f, int enable)
 			dev->cdev->desc.idVendor = device_desc.idVendor;
 			dev->cdev->desc.idProduct = device_desc.idProduct;
 		}
-		usb_composite_force_reset(dev->cdev);
+
+		if (!strcmp(f->name, "rndis") && enable)
+			usb_composite_force_reset(dev->cdev, 1);
+		else
+			usb_composite_force_reset(dev->cdev, 0);
 	}
 	return 0;
 }
@@ -696,6 +741,11 @@ static int __init android_probe(struct platform_device *pdev)
 					pdata->manufacturer_name;
 		if (pdata->serial_number)
 			strings_dev[STRING_SERIAL_IDX].s = pdata->serial_number;
+#ifdef CONFIG_USB_ANDROID_GG
+		/* Set NULL to serial number if gg is enabled */
+		if (usb_gg)
+			strings_dev[STRING_SERIAL_IDX].s = NULL;
+#endif
 	}
 #ifdef CONFIG_DEBUG_FS
 	result = android_debugfs_init(dev);

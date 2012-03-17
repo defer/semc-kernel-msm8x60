@@ -1,5 +1,7 @@
 /* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
  *
+ * Copyright (c) 2011, Sony Ericsson Mobile Communications Japan.
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
  * only version 2 as published by the Free Software Foundation.
@@ -68,9 +70,29 @@ static irqreturn_t pwrkey_press_irq(int irq, void *_pwrkey)
 	struct pmic8058_pwrkey *pwrkey = _pwrkey;
 	struct pmic8058_pwrkey_pdata *pdata = pwrkey->pdata;
 	unsigned long flags;
+	int err;
 
+#ifdef CONFIG_PMIC8058_FORCECRASH
+	pmic8058_forcecrash_timer_setup(1);
+#endif
 	spin_lock_irqsave(&pwrkey->lock, flags);
 	if (pwrkey->pressed_first) {
+		err = pm8058_irq_get_rt_status(pwrkey->pm_chip,
+					pwrkey->key_press_irq);
+		if (err < 0) {
+			spin_unlock_irqrestore(&pwrkey->lock, flags);
+			return IRQ_HANDLED;
+		}
+		if (err) {
+			if (!pwrkey->pdata->pwrkey_time_ms)
+				input_report_key(pwrkey->pwr, KEY_POWER, 1);
+			else
+				input_report_key(pwrkey->pwr, KEY_END, 1);
+			input_sync(pwrkey->pwr);
+			spin_unlock_irqrestore(&pwrkey->lock, flags);
+			return IRQ_HANDLED;
+		}
+
 		/*
 		 * If pressed_first flag is set already then release interrupt
 		 * has occured first. Events are handled in the release IRQ so
@@ -107,6 +129,9 @@ static irqreturn_t pwrkey_release_irq(int irq, void *_pwrkey)
 	struct pmic8058_pwrkey *pwrkey = _pwrkey;
 	unsigned long flags;
 
+#ifdef CONFIG_PMIC8058_FORCECRASH
+	pmic8058_forcecrash_timer_setup(0);
+#endif
 	spin_lock_irqsave(&pwrkey->lock, flags);
 	if (pwrkey->pressed_first) {
 		pwrkey->pressed_first = false;
@@ -316,6 +341,9 @@ static int __devinit pmic8058_pwrkey_probe(struct platform_device *pdev)
 	}
 
 	device_init_wakeup(&pdev->dev, pdata->wakeup);
+#ifdef CONFIG_PMIC8058_FORCECRASH
+	pmic8058_forcecrash_init(pdev, pm_chip);
+#endif
 
 	return 0;
 
@@ -339,6 +367,9 @@ static int __devexit pmic8058_pwrkey_remove(struct platform_device *pdev)
 	int key_release_irq = platform_get_irq(pdev, 0);
 	int key_press_irq = platform_get_irq(pdev, 1);
 
+#ifdef CONFIG_PMIC8058_FORCECRASH
+	pmic8058_forcecrash_exit(pdev);
+#endif
 	pm_runtime_set_suspended(&pdev->dev);
 	pm_runtime_disable(&pdev->dev);
 	device_init_wakeup(&pdev->dev, 0);

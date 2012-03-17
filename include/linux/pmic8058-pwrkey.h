@@ -43,4 +43,11 @@ struct pmic8058_pwrkey_pdata {
 	u32  wakeup;
 };
 
+#ifdef CONFIG_PMIC8058_FORCECRASH
+extern int pmic8058_forcecrash_init(struct platform_device *,
+					struct pm8058_chip *);
+extern void pmic8058_forcecrash_exit(struct platform_device *);
+extern void pmic8058_forcecrash_timer_setup(bool);
+#endif
+
 #endif /* __PMIC8058_PWRKEY_H__ */

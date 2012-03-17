@@ -153,3 +153,23 @@ config QUP_EXCLUSIVE_TO_CAMERA
 	  by QUP in the board file as QUP is used by
 	  applications other than camera.
 
+config SEMC_CAMERA_MODULE
+	bool "SEMC specific camera (Main camera)"
+	depends on MSM_CAMERA
+	default y
+	---help---
+	  SEMC specific camera module
+
+config SEMC_SUB_CAMERA_MODULE
+	bool "SEMC specific camera (Sub camera)"
+	depends on MSM_CAMERA
+	default y
+	---help---
+	  SEMC specific sub camera module
+
+config MSM_VPE_STANDALONE
+	tristate "Qualcomm MSM Video Pre-processing Engine support"
+	depends on MSM_CAMERA && (ARCH_MSM7X30 || ARCH_MSM8X60)
+	default y
+	---help---
+	  Enable support for Video Pre-processing Engine

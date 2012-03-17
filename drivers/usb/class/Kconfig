@@ -19,6 +19,13 @@ config USB_ACM
 	  To compile this driver as a module, choose M here: the
 	  module will be called cdc-acm.
 
+config USB_ACM_ICUBE_ONESEG_TUNER
+       bool "USB oneseg tuner accessory support"
+       depends on USB_ACM
+       default n
+       ---help---
+         Say Y here if you enable Oneseg accessory via ACM.
+
 config USB_PRINTER
 	tristate "USB Printer support"
 	depends on USB

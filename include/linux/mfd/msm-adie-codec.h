@@ -1,4 +1,5 @@
 /* Copyright (c) 2010, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011, Sony Ericsson Mobile Communications AB.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -147,6 +148,8 @@ struct adie_codec_operations {
 	int (*codec_set_device_analog_volume) (struct adie_codec_path *path_ptr,
 						u32 num_channels,
 						u32 volume);
+
+	int (*codec_powerup)(u8 enable);
 	int (*codec_set_master_mode) (struct adie_codec_path *path_ptr,
 					u8 master);
 };
@@ -169,6 +172,8 @@ int adie_codec_set_device_digital_volume(struct adie_codec_path *path_ptr,
 
 int adie_codec_set_device_analog_volume(struct adie_codec_path *path_ptr,
 		u32 num_channels, u32 volume /* in percentage */);
+
+int adie_codec_powerup(u8 enable);
 
 int adie_codec_set_master_mode(struct adie_codec_path *path_ptr, u8 master);
 #endif

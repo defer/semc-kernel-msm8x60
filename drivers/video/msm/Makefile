@@ -1,6 +1,5 @@
 obj-y := msm_fb.o
 
-obj-$(CONFIG_FB_MSM_LOGO) += logo.o
 obj-$(CONFIG_FB_BACKLIGHT) += msm_fb_bl.o
 
 # MDP
@@ -65,6 +64,8 @@ obj-$(CONFIG_FB_MSM_MIPI_DSI) += msm_mipi.o
 # MIPI manufacture
 obj-$(CONFIG_FB_MSM_MIPI_DSI_TOSHIBA) += mipi_toshiba.o
 obj-$(CONFIG_FB_MSM_MIPI_DSI_NOVATEK) += mipi_novatek.o
+obj-$(CONFIG_FB_MSM_MIPI_DSI_RENESAS_R63306) += mipi_renesas_r63306.o mipi_r63306_panels/
+obj-$(CONFIG_FB_MSM_MIPI_DSI_SAMSUNG_S6D6AA0) += mipi_samsung_s6d6aa0.o mipi_s6d6aa0_panels/
 
 # TVEnc
 obj-$(CONFIG_FB_MSM_TVOUT) += tvenc.o
@@ -83,6 +84,9 @@ obj-y += mddi_toshiba.o
 obj-y += mddi_toshiba_vga.o
 obj-y += mddi_toshiba_wvga_pt.o
 obj-y += mddi_toshiba_wvga.o
+obj-y += mddi_hitachi_r61529_hvga.o
+obj-y += mddi_novatek_fwvga.o
+obj-y += mddi_sony_s6d05a1_hvga.o
 obj-y += mddi_sharp.o
 obj-y += mddi_orise.o
 obj-y += mddi_quickvx.o
@@ -95,6 +99,9 @@ obj-$(CONFIG_FB_MSM_MDDI_TOSHIBA_WVGA) += mddi_toshiba_wvga.o
 obj-$(CONFIG_FB_MSM_MDDI_SHARP_QVGA_128x128) += mddi_sharp.o
 obj-$(CONFIG_FB_MSM_MDDI_ORISE) += mddi_orise.o
 obj-$(CONFIG_FB_MSM_MDDI_QUICKVX) += mddi_quickvx.o
+obj-$(CONFIG_FB_MSM_MDDI_HITACHI_HVGA_LCD) += mddi_hitachi_r61529_hvga.o
+obj-$(CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA) += mddi_novatek_fwvga.o mddi_nt_panels/
+obj-$(CONFIG_FB_MSM_MDDI_SONY_HVGA_LCD) += mddi_sony_s6d05a1_hvga.o
 endif
 
 ifeq ($(CONFIG_FB_MSM_MIPI_PANEL_DETECT),y)
@@ -124,8 +131,13 @@ obj-$(CONFIG_FB_MSM_LCDC_SAMSUNG_OLED_PT) += lcdc_samsung_oled_pt.o
 obj-$(CONFIG_FB_MSM_HDMI_ADV7520_PANEL) += adv7520.o
 obj-$(CONFIG_FB_MSM_LCDC_ST15_WXGA) += lcdc_st15.o
 obj-$(CONFIG_FB_MSM_LCDC_QRDC_WXGA) += lcdc_qrdc.o
+
+obj-$(CONFIG_FB_MSM_LOGO) += logo.o
+
 obj-$(CONFIG_FB_MSM_HDMI_MSM_PANEL) += hdmi_msm.o
+obj-$(CONFIG_FB_MSM_HDMI_MSM_FUJI_PANEL) += hdmi_msm_fuji.o
 obj-$(CONFIG_FB_MSM_EXT_INTERFACE_COMMON) += external_common.o
+obj-$(CONFIG_FB_MSM_HDMI_SII9024A_PANEL) += hdmi_sii9024a.o
 
 obj-$(CONFIG_FB_MSM_TVOUT) += tvout_msm.o
 

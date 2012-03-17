@@ -3,6 +3,7 @@
  *
  * Copyright (c) 1999-2002 Vojtech Pavlik
  * Copyright (c) 1999 Colin Van Dyke
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -791,6 +792,12 @@ static bool joydev_match(struct input_handler *handler, struct input_dev *dev)
 	if (test_bit(EV_KEY, dev->evbit) && test_bit(BTN_DIGI, dev->keybit))
 		return false;
 
+	/* Avoid Microsoft Wired Keyboard 600 */
+	if (dev->id.bustype == BUS_USB &&
+		dev->id.vendor == 0x045E &&
+		dev->id.product == 0x0750)
+		return false;
+
 	return true;
 }
 
@@ -916,39 +923,51 @@ static void joydev_disconnect(struct input_handle *handle)
 static const struct input_device_id joydev_ids[] = {
 	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
-				INPUT_DEVICE_ID_MATCH_ABSBIT,
+				INPUT_DEVICE_ID_MATCH_ABSBIT |
+				INPUT_DEVICE_ID_MATCH_BUS,
 		.evbit = { BIT_MASK(EV_ABS) },
 		.absbit = { BIT_MASK(ABS_X) },
+		.bustype = BUS_USB,
 	},
 	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
-				INPUT_DEVICE_ID_MATCH_ABSBIT,
+				INPUT_DEVICE_ID_MATCH_ABSBIT |
+				INPUT_DEVICE_ID_MATCH_BUS,
 		.evbit = { BIT_MASK(EV_ABS) },
 		.absbit = { BIT_MASK(ABS_WHEEL) },
+		.bustype = BUS_USB,
 	},
 	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
-				INPUT_DEVICE_ID_MATCH_ABSBIT,
+				INPUT_DEVICE_ID_MATCH_ABSBIT |
+				INPUT_DEVICE_ID_MATCH_BUS,
 		.evbit = { BIT_MASK(EV_ABS) },
 		.absbit = { BIT_MASK(ABS_THROTTLE) },
+		.bustype = BUS_USB,
 	},
 	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
-				INPUT_DEVICE_ID_MATCH_KEYBIT,
+				INPUT_DEVICE_ID_MATCH_KEYBIT |
+				INPUT_DEVICE_ID_MATCH_BUS,
 		.evbit = { BIT_MASK(EV_KEY) },
 		.keybit = {[BIT_WORD(BTN_JOYSTICK)] = BIT_MASK(BTN_JOYSTICK) },
+		.bustype = BUS_USB,
 	},
 	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
-				INPUT_DEVICE_ID_MATCH_KEYBIT,
+				INPUT_DEVICE_ID_MATCH_KEYBIT |
+				INPUT_DEVICE_ID_MATCH_BUS,
 		.evbit = { BIT_MASK(EV_KEY) },
 		.keybit = { [BIT_WORD(BTN_GAMEPAD)] = BIT_MASK(BTN_GAMEPAD) },
+		.bustype = BUS_USB,
 	},
 	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
-				INPUT_DEVICE_ID_MATCH_KEYBIT,
+				INPUT_DEVICE_ID_MATCH_KEYBIT |
+				INPUT_DEVICE_ID_MATCH_BUS,
 		.evbit = { BIT_MASK(EV_KEY) },
 		.keybit = { [BIT_WORD(BTN_TRIGGER_HAPPY)] = BIT_MASK(BTN_TRIGGER_HAPPY) },
+		.bustype = BUS_USB,
 	},
 	{ }	/* Terminating entry */
 };

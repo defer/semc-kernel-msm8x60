@@ -1,6 +1,8 @@
 /*
  *  linux/include/linux/mmc/host.h
  *
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
@@ -327,6 +329,10 @@ static inline int mmc_card_is_removable(struct mmc_host *host)
 {
 	return !(host->caps & MMC_CAP_NONREMOVABLE) && mmc_assume_removable;
 }
+
+#ifdef CONFIG_MACH_SDCC_BCM_DRIVER
+extern void mmc_pm_keeppwr_control(struct mmc_host *mmc, int pwr);
+#endif
 
 #endif
 

@@ -17,10 +17,18 @@
 
 #include <linux/types.h>
 
+#define TZEXEC_CORE_SVC_ID          0x00010000
+/**
+  Commands for TZ Exec Core
+ */
+#define TZEXEC_CORE_CREATE_CMD(x)         (TZEXEC_CORE_SVC_ID | x)
+
 enum tz_sched_cmd_id {
-	TZ_SCHED_CMD_ID_INVALID      = 0,
-	TZ_SCHED_CMD_ID_INIT_SB_OUT,    /**< Initialize the shared buffer */
-	TZ_SCHED_CMD_ID_INIT_SB_LOG,    /**< Initialize the logging shared buf */
+	TZ_SCHED_CMD_ID_INVALID      = TZEXEC_CORE_CREATE_CMD(0),
+	/* Initialize the shared buffer */
+	TZ_SCHED_CMD_ID_INIT_SB_OUT  = TZEXEC_CORE_CREATE_CMD(1),
+	/* Initialize the logging shared buf */
+	TZ_SCHED_CMD_ID_INIT_SB_LOG  = TZEXEC_CORE_CREATE_CMD(2),
 	TZ_SCHED_CMD_ID_UNKNOWN         = 0x7FFFFFFE,
 	TZ_SCHED_CMD_ID_MAX             = 0x7FFFFFFF
 };

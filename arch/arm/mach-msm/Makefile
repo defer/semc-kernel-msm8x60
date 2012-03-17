@@ -58,20 +58,22 @@ obj-$(CONFIG_ARCH_QSD8X50) += sirc.o
 obj-$(CONFIG_MSM_FIQ_SUPPORT) += fiq_glue.o
 obj-$(CONFIG_MACH_TROUT) += board-trout-rfkill.o
 obj-$(CONFIG_MSM_SDIO_AL) += sdio_al.o
-obj-$(CONFIG_MSM_SDIO_AL) += sdio_al_test.o
 obj-$(CONFIG_MSM_SDIO_AL) += sdio_al_dloader.o
 obj-$(CONFIG_MSM_SDIO_DMUX) += sdio_dmux.o
 obj-$(CONFIG_MSM_SMD_LOGGING) += smem_log.o
-obj-$(CONFIG_MSM_SMD) += smd.o smd_debug.o remote_spinlock.o
+obj-$(CONFIG_MSM_SMD) += smd.o smd_debug.o remote_spinlock.o socinfo.o
+ifndef CONFIG_ARCH_MSM7X27A
         obj-y += socinfo.o
+endif
 ifndef CONFIG_ARCH_MSM8960
 ifndef CONFIG_ARCH_MSM8X60
 	obj-$(CONFIG_MSM_SMD) += pmic.o
 	obj-$(CONFIG_MSM_SMD) += nand_partitions.o
+	obj-$(CONFIG_MSM_SMD) += last_amsslog.o
 	obj-$(CONFIG_MSM_ONCRPCROUTER) += rpc_hsusb.o rpc_pmapp.o rpc_fsusb.o
 endif
 endif
-obj-$(CONFIG_MSM_SDIO_TTY) += sdio_tty.o sdio_tty_ciq.o
+obj-$(CONFIG_MSM_SDIO_TTY) += sdio_tty.o
 obj-$(CONFIG_MSM_SMD_TTY) += smd_tty.o
 obj-$(CONFIG_MSM_SMD_QMI) += smd_qmi.o
 obj-$(CONFIG_MSM_SMD_PKT) += smd_pkt.o
@@ -174,6 +176,25 @@ obj-$(CONFIG_MACH_MSM7X25_FFA) += board-msm7x27.o devices-msm7x25.o
 obj-$(CONFIG_ARCH_MSM8960) += board-msm8960.o devices-8960.o footswitch-8x60.o
 obj-$(CONFIG_ARCH_MSM8960) += board-msm8960-regulator.o
 
+obj-$(CONFIG_MACH_SEMC_ZEUS) += board-semc_zeus.o
+obj-$(CONFIG_MACH_SEMC_ANZU) += board-semc_mogami.o board-semc_mogami-rfkill.o keypad-anzu.o leds-anzu.o gpio-anzu.o charger-anzu.o
+obj-$(CONFIG_MACH_SEMC_HALLON) += board-semc_mogami.o board-semc_mogami-rfkill.o keypad-hallon.o leds-hallon.o gpio-hallon.o charger-hallon.o fpc_test-hallon.o
+obj-$(CONFIG_MACH_SEMC_IYOKAN) += board-semc_mogami.o board-semc_mogami-rfkill.o keypad-iyokan.o leds-iyokan.o gpio-iyokan.o charger-iyokan.o
+obj-$(CONFIG_MACH_SEMC_URUSHI) += board-semc_mogami.o board-semc_mogami-rfkill.o keypad-urushi.o leds-urushi.o gpio-urushi.o charger-urushi.o
+obj-$(CONFIG_MACH_SEMC_SMULTRON) += board-semc_mogami.o board-semc_mogami-rfkill.o keypad-smultron.o leds-smultron.o gpio-smultron.o charger-smultron.o
+obj-$(CONFIG_MACH_SEMC_MANGO) += board-semc_mogami.o board-semc_mogami-rfkill.o keypad-mango.o leds-mango.o gpio-mango.o charger-mango.o
+obj-$(CONFIG_MACH_SEMC_STRAWBERRY) += board-semc_mogami.o board-semc_mogami-rfkill.o keypad-strawberry.o leds-strawberry.o gpio-strawberry.o charger-strawberry.o
+obj-$(CONFIG_MACH_SEMC_AKANE) += board-semc_mogami.o board-semc_mogami-rfkill.o keypad-akane.o leds-akane.o gpio-akane.o charger-akane.o
+obj-$(CONFIG_MACH_SEMC_AZUSA) += board-semc_mogami.o board-semc_mogami-rfkill.o keypad-azusa.o leds-azusa.o gpio-azusa.o charger-azusa.o
+
+obj-$(CONFIG_MACH_SEMC_FUJI_NOZOMI_DCM) += board-semc_fuji.o gpiomux-fuji_nozomi.o keypad-fuji_nozomi.o vreg-fuji_nozomi.o leds-fuji_nozomi.o board-semc_fuji-usb.o board-semc_fuji-video.o board-semc_fuji-sdcc.o board-semc_fuji-pmic.o charger-fuji_nozomi.o board-semc_fuji-rfkill.o touch-fuji_nozomi.o gyro-semc_fuji_nozomi.o gyro-semc_fuji_common.o
+
+obj-$(CONFIG_MOGAMI_VIBRATOR) += vibrator-mogami.o
+
+obj-$(CONFIG_MACH_SEMC_ZEUS) += keypad-pmic-zeus.o
+obj-$(CONFIG_MACH_SEMC_ZEUS) += keypad-zeus.o
+obj-$(CONFIG_MACH_SEMC_ZEUS) += board-semc_zeus-wifi.o board-semc_zeus-rfkill.o
+
 obj-$(CONFIG_MACH_SAPPHIRE) += board-sapphire.o board-sapphire-gpio.o
 obj-$(CONFIG_MACH_SAPPHIRE) += board-sapphire-keypad.o board-sapphire-panel.o
 obj-$(CONFIG_MACH_SAPPHIRE) += board-sapphire-mmc.o board-sapphire-wifi.o
@@ -215,3 +236,23 @@ obj-$(CONFIG_MSM_SHOW_RESUME_IRQ) += msm_show_resume_irq.o
 obj-$(CONFIG_BT_MSM_PINTEST)  += btpintest.o
 obj-$(CONFIG_ENABLE_ROMLITE)  += romlite_sec.o
 romlite_sec-objs := msm_romlite_sec.o msm_romlite_pa.o
+
+
+ifdef CONFIG_ARCH_MSM7X30
+	obj-$(CONFIG_SIMPLE_REMOTE_PLATFORM) += simple_remote_msm7x30_pf.o
+endif
+ifdef CONFIG_ARCH_MSM8X60
+	obj-$(CONFIG_SIMPLE_REMOTE_PLATFORM) += simple_remote_msm8x60_pf.o
+endif
+
+obj-$(CONFIG_SEMC_RPC_SERVER_HANDSET) += semc_rpc_server_handset.o
+
+obj-$(CONFIG_BATTERY_SEMC_ARCH) += semc_battery_data.o
+
+obj-$(CONFIG_PMIC_TIME) += pmic_time.o
+
+obj-$(CONFIG_SEMC_CHARGER_USB_ARCH) += semc_charger_usb.o
+
+obj-$(CONFIG_SEMC_CHARGER_CRADLE_ARCH) += semc_charger_cradle.o
+
+obj-$(CONFIG_FUJI_PMIC_KEYPAD) += keypad-pmic-fuji.o

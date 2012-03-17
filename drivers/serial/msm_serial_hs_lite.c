@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2007 Google, Inc.
  * Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011 Sony Ericsson Mobile Communications AB
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -57,6 +58,7 @@ struct msm_hsl_port {
 	unsigned int            *gsbi_mapbase;
 	unsigned int            *mapped_gsbi;
 	unsigned int            old_snap_state;
+	struct msm_serial_hslite_platform_data *pdata;
 };
 
 #define UART_TO_MSM(uart_port)	((struct msm_hsl_port *) uart_port)
@@ -674,6 +676,9 @@ static int msm_hsl_startup(struct uart_port *port)
 		printk(KERN_ERR "%s: failed to request_irq\n", __func__);
 		return ret;
 	}
+	if (msm_hsl_port->pdata && msm_hsl_port->pdata->type == PORT_IRDA)
+		msm_hsl_write(port, (UARTDM_IRDA_INVERT_RX_BMSK |
+					UARTDM_IRDA_EN_BMSK), UARTDM_IRDA_ADDR);
 	return 0;
 }
 
@@ -688,7 +693,8 @@ static void msm_hsl_shutdown(struct uart_port *port)
 
 	msm_hsl_port->imr = 0;
 	msm_hsl_write(port, 0, UARTDM_IMR_ADDR); /* disable interrupts */
-
+	if (msm_hsl_port->pdata && msm_hsl_port->pdata->type == PORT_IRDA)
+		msm_hsl_write(port, 0, UARTDM_IRDA_ADDR);
 	clk_en(port, 0);
 
 	free_irq(port->irq, port);
@@ -967,6 +973,15 @@ static struct msm_hsl_port msm_hsl_uart_ports[] = {
 			.line = 2,
 		},
 	},
+	{
+		.uart = {
+			.iotype = UPIO_MEM,
+			.ops = &msm_hsl_uart_pops,
+			.flags = UPF_BOOT_AUTOCONF,
+			.fifosize = 64,
+			.line = 3,
+		},
+	},
 };
 
 #define UART_NR	ARRAY_SIZE(msm_hsl_uart_ports)
@@ -1112,6 +1127,7 @@ static int __devinit msm_serial_hsl_probe(struct platform_device *pdev)
 	struct resource *uart_resource;
 	struct resource *gsbi_resource;
 	struct uart_port *port;
+	struct msm_serial_hslite_platform_data *pdata = pdev->dev.platform_data;
 	int ret;
 
 	if (unlikely(pdev->id < 0 || pdev->id >= UART_NR))
@@ -1146,6 +1162,7 @@ static int __devinit msm_serial_hsl_probe(struct platform_device *pdev)
 		return PTR_ERR(msm_hsl_port->pclk);
 	}
 
+	msm_hsl_port->pdata = pdata;
 	uart_resource = platform_get_resource_byname(pdev,
 						     IORESOURCE_MEM,
 						     "uartdm_resource");

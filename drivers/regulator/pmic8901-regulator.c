@@ -1,4 +1,5 @@
 /* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -791,6 +792,26 @@ static int pm8901_vs_disable(struct regulator_dev *dev)
 	return rc;
 }
 
+static unsigned pm8901_mpp_check_level(unsigned level)
+{
+	unsigned rc;
+
+	switch (level) {
+	case PM8901_MPP_DIG_LEVEL_MSMIO:
+	case PM8901_MPP_DIG_LEVEL_DIG:
+	case PM8901_MPP_DIG_LEVEL_L5:
+	case PM8901_MPP_DIG_LEVEL_S4:
+	case PM8901_MPP_DIG_LEVEL_VPH:
+		rc = level;
+		break;
+	default:
+		rc = PM8901_MPP_DIG_LEVEL_VPH;
+		break;
+	}
+
+	return rc;
+}
+
 static int pm8901_mpp_enable(struct regulator_dev *dev)
 {
 	struct pm8901_vreg *vreg = rdev_get_drvdata(dev);
@@ -801,7 +822,7 @@ static int pm8901_mpp_enable(struct regulator_dev *dev)
 		   ? PM_MPP_DOUT_CTL_HIGH : PM_MPP_DOUT_CTL_LOW);
 
 	rc = pm8901_mpp_config(vreg->mpp_id, PM_MPP_TYPE_D_OUTPUT,
-			PM8901_MPP_DIG_LEVEL_VPH, out_val);
+			pm8901_mpp_check_level(vreg->pdata->level), out_val);
 
 	if (rc)
 		pr_err("%s: pm8901_mpp_config failed, rc=%d\n", __func__, rc);
@@ -821,7 +842,7 @@ static int pm8901_mpp_disable(struct regulator_dev *dev)
 		   ? PM_MPP_DOUT_CTL_LOW : PM_MPP_DOUT_CTL_HIGH);
 
 	rc = pm8901_mpp_config(vreg->mpp_id, PM_MPP_TYPE_D_OUTPUT,
-			PM8901_MPP_DIG_LEVEL_VPH, out_val);
+			pm8901_mpp_check_level(vreg->pdata->level), out_val);
 
 	if (rc)
 		pr_err("%s: pm8901_mpp_config failed, rc=%d\n", __func__, rc);

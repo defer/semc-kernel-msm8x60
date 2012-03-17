@@ -51,11 +51,16 @@
 #define MSMFB_OVERLAY_3D       _IOWR(MSMFB_IOCTL_MAGIC, 147, \
 						struct msmfb_overlay_3d)
 
-#define MSMFB_MIXER_INFO       _IOWR(MSMFB_IOCTL_MAGIC, 148, \
+#define MSMFB_DTV_LCDC_ENABLE     _IOW(MSMFB_IOCTL_MAGIC, 148, unsigned int)
+#define MSMFB_OVERLAY_REFRESH     _IOW(MSMFB_IOCTL_MAGIC, 149, unsigned int)
+#define MSMFB_MIXER_INFO       _IOWR(MSMFB_IOCTL_MAGIC, 150, \
 						struct msmfb_mixer_info_req)
+#define MSMFB_OVERLAY_PLAY_WAIT _IOW(MSMFB_IOCTL_MAGIC, 151, \
+						struct msmfb_overlay_data)
 
 
 #define FB_TYPE_3D_PANEL 0x10101010
+
 #define MDP_IMGTYPE2_START 0x10000
 
 enum {
@@ -122,6 +127,7 @@ enum {
 
 #define MDP_TRANSP_NOP 0xffffffff
 #define MDP_ALPHA_NOP 0xff
+#define MDP_SOURCE_ROTATED_90		0x00100000
 
 #define MDP_FB_PAGE_PROTECTION_NONCACHED         (0)
 #define MDP_FB_PAGE_PROTECTION_WRITECOMBINE      (1)

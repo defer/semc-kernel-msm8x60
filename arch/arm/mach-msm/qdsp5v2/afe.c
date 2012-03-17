@@ -27,7 +27,7 @@
 #include <mach/msm_adsp.h>
 #include <mach/debug_mm.h>
 
-#define AFE_MAX_TIMEOUT 500 /* 500 ms */
+#define AFE_MAX_TIMEOUT 1000 /* 1000 ms */
 #define AFE_MAX_CLNT 6 /* 6 HW path defined so far */
 #define GETDEVICEID(x) ((x) - 1)
 

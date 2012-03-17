@@ -24,8 +24,16 @@
 #define DEV_DBG_PREFIX "EXT_COMMON: "
 
 #include "msm_fb.h"
+#ifdef CONFIG_FB_MSM_HDMI_MSM_FUJI_PANEL
+#ifdef CONFIG_SUSPEND
+#undef CONFIG_SUSPEND
+#endif
+#include <linux/hdmi_msm_fuji.h>
+#include <linux/external_common_fuji.h>
+#else /* CONFIG_FB_MSM_HDMI_MSM_FUJI_PANEL */
 #include "hdmi_msm.h"
 #include "external_common.h"
+#endif /* CONFIG_FB_MSM_HDMI_MSM_FUJI_PANEL */
 
 struct external_common_state_type *external_common_state;
 EXPORT_SYMBOL(external_common_state);
@@ -336,6 +344,12 @@ static ssize_t hdmi_msm_wta_cec(struct device *dev,
 		mutex_lock(&hdmi_msm_state_mutex);
 		hdmi_msm_state->cec_enabled = true;
 		hdmi_msm_state->cec_logical_addr = 4;
+		/* flush CEC queue */
+		hdmi_msm_state->cec_queue_wr = hdmi_msm_state->cec_queue_start;
+		hdmi_msm_state->cec_queue_rd = hdmi_msm_state->cec_queue_start;
+		hdmi_msm_state->cec_queue_full = false;
+		memset(hdmi_msm_state->cec_queue_rd, 0,
+		       sizeof(struct hdmi_msm_cec_msg)*CEC_QUEUE_SIZE);
 		mutex_unlock(&hdmi_msm_state_mutex);
 		hdmi_msm_cec_init();
 		hdmi_msm_cec_write_logical_addr(
@@ -409,6 +423,12 @@ static ssize_t hdmi_msm_rda_cec_frame(struct device *dev,
 	hdmi_msm_state->cec_queue_full = false;
 	if (hdmi_msm_state->cec_queue_rd == CEC_QUEUE_END)
 		hdmi_msm_state->cec_queue_rd = hdmi_msm_state->cec_queue_start;
+#ifdef CONFIG_FB_MSM_HDMI_MSM_FUJI_PANEL
+	if (hdmi_msm_state->cec_queue_wr != hdmi_msm_state->cec_queue_rd) {
+		hdmi_msm_state->int_status |= IRQ_BVS;
+		complete(&hdmi_msm_state->int_done);
+	}
+#endif
 	mutex_unlock(&hdmi_msm_state_mutex);
 
 	return sizeof(struct hdmi_msm_cec_msg);
@@ -417,15 +437,14 @@ static ssize_t hdmi_msm_rda_cec_frame(struct device *dev,
 static ssize_t hdmi_msm_wta_cec_frame(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count)
 {
+	int i;
 	int retry = ((struct hdmi_msm_cec_msg *) buf)->retransmit;
 
-	if (retry > 15)
-		retry = 15;
-	while (1) {
+	for (i = 0; i < RETRANSMIT_MAX_NUM; i++) {
 		hdmi_msm_cec_msg_send((struct hdmi_msm_cec_msg *) buf);
-		if (hdmi_msm_state->cec_frame_wr_status
-		    & CEC_STATUS_WR_ERROR && retry--)
-			msleep(360);
+		if (!(hdmi_msm_state->cec_frame_wr_status
+		      & CEC_STATUS_WR_DONE) && retry--)
+			msleep(10);
 		else
 			break;
 	}

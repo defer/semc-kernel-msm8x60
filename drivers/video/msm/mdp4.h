@@ -158,16 +158,19 @@ enum {
 	OVERLAY_PIPE_MAX
 };
 
-enum {
-	OVERLAY_TYPE_RGB,
-	OVERLAY_TYPE_VIDEO
-};
+/* 2 VG pipes can be shared by RGB and VIDEO */
+#define MDP4_MAX_PIPE (OVERLAY_PIPE_MAX + 2)
+
+#define OVERLAY_TYPE_RGB	0x01
+#define	OVERLAY_TYPE_VIDEO	0x02
 
 enum {
 	MDP4_MIXER0,
 	MDP4_MIXER1,
 	MDP4_MIXER_MAX
 };
+
+#define MDP4_MAX_MIXER	2
 
 enum {
 	OVERLAY_PLANE_INTERLEAVED,
@@ -245,6 +248,7 @@ struct mdp4_overlay_pipe {
 	uint32 pipe_type;		/* rgb, video/graphic */
 	uint32 pipe_num;
 	uint32 pipe_ndx;
+	uint32 pipe_share;
 	uint32 mixer_num;		/* which mixer used */
 	uint32 mixer_stage;		/* which stage of mixer used */
 	uint32 src_format;
@@ -317,6 +321,15 @@ struct mdp4_overlay_pipe {
 	struct mdp_overlay req_data;
 };
 
+#define MDP4_MAX_SHARE	2
+
+struct mdp4_pipe_desc {
+	int share;
+	int ref_cnt;
+	int ndx_list[MDP4_MAX_SHARE];
+	struct mdp4_overlay_pipe *player;
+};
+
 struct mdp4_statistic {
 	ulong intr_tot;
 	ulong intr_dma_p;
@@ -336,7 +349,7 @@ struct mdp4_statistic {
 	ulong overlay_set[MDP4_MIXER_MAX];
 	ulong overlay_unset[MDP4_MIXER_MAX];
 	ulong overlay_play[MDP4_MIXER_MAX];
-	ulong pipe[OVERLAY_PIPE_MAX];
+	ulong pipe[MDP4_MAX_PIPE];
 	ulong dsi_clkoff;
 	ulong err_mixer;
 	ulong err_zorder;
@@ -381,6 +394,7 @@ uint32 mdp4_overlay_op_mode(struct mdp4_overlay_pipe *pipe);
 void mdp4_lcdc_overlay(struct msm_fb_data_type *mfd);
 void mdp4_overlay_dtv_ov_done_push(struct msm_fb_data_type *mfd,
 			struct mdp4_overlay_pipe *pipe);
+void mdp4_overlay_dtv_wait4_ov(struct msm_fb_data_type *mfd);
 #ifdef CONFIG_FB_MSM_DTV
 void mdp4_overlay_dtv_vsync_push(struct msm_fb_data_type *mfd,
 			struct mdp4_overlay_pipe *pipe);
@@ -394,6 +408,7 @@ static inline void mdp4_overlay_dtv_vsync_push(struct msm_fb_data_type *mfd,
 void mdp4_dtv_overlay(struct msm_fb_data_type *mfd);
 int mdp4_dtv_on(struct platform_device *pdev);
 int mdp4_dtv_off(struct platform_device *pdev);
+int mdp4_dtv_lcdc_enable(struct platform_device *pdev, int enable);
 void mdp4_atv_overlay(struct msm_fb_data_type *mfd);
 int mdp4_atv_on(struct platform_device *pdev);
 int mdp4_atv_off(struct platform_device *pdev);
@@ -419,9 +434,13 @@ int mdp4_overlay_format2pipe(struct mdp4_overlay_pipe *pipe);
 int mdp4_overlay_get(struct fb_info *info, struct mdp_overlay *req);
 int mdp4_overlay_set(struct fb_info *info, struct mdp_overlay *req);
 int mdp4_overlay_unset(struct fb_info *info, int ndx);
+int mdp4_overlay_play_wait(struct fb_info *info,
+				struct msmfb_overlay_data *req);
 int mdp4_overlay_play(struct fb_info *info, struct msmfb_overlay_data *req,
 				struct file **pp_src_file);
-struct mdp4_overlay_pipe *mdp4_overlay_pipe_alloc(int ptype, int mixer);
+int mdp4_overlay_refresh(struct fb_info *info, int ndx);
+struct mdp4_overlay_pipe *mdp4_overlay_pipe_alloc(int ptype, int mixer,
+				int req_share);
 void mdp4_overlay_pipe_free(struct mdp4_overlay_pipe *pipe);
 void mdp4_overlay_dmap_cfg(struct msm_fb_data_type *mfd, int lcdc);
 void mdp4_overlay_dmap_xy(struct mdp4_overlay_pipe *pipe);
@@ -594,6 +613,7 @@ void mdp_hw_cursor_init(void);
 int mdp4_mddi_overlay_cursor(struct fb_info *info, struct fb_cursor *cursor);
 int mdp_ppp_blit(struct fb_info *info, struct mdp_blit_req *req);
 void mdp4_overlay_resource_release(void);
+void mdp_vsync_config_update(struct msm_panel_info *pinfo);
 void mdp4_overlay_dsi_video_wait4vsync(struct msm_fb_data_type *mfd);
 void mdp4_primary_vsync_dsi_video(void);
 uint32_t mdp4_ss_table_value(int8_t param, int8_t index);

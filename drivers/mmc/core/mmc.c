@@ -502,6 +502,19 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 	if (!oldcard)
 		host->card = card;
 
+	printk(KERN_INFO "MMC card parameters :\n");
+	printk(KERN_INFO "     CID : %08x%08x%08x%08x\n", card->raw_cid[0],
+							  card->raw_cid[1],
+							  card->raw_cid[2],
+							  card->raw_cid[3]);
+	printk(KERN_INFO "     CSD : %08x%08x%08x%08x\n", card->raw_csd[0],
+							  card->raw_csd[1],
+							  card->raw_csd[2],
+							  card->raw_csd[3]);
+	printk(KERN_INFO "     MDT : %2d/%4d\n", card->cid.month,
+						 card->cid.year);
+	printk(KERN_INFO "     PSN : 0x%08x\n", card->cid.serial);
+
 	return 0;
 
 free_card:

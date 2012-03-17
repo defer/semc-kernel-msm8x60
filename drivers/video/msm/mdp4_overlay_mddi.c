@@ -42,7 +42,9 @@ static struct mdp4_overlay_pipe *mddi_pipe;
 static struct msm_fb_data_type *mddi_mfd;
 static int busy_wait_cnt;
 
-static int vsync_start_y_adjust = 4;
+#define DMAP_VSYNC_START_Y_ADJUST -4
+#define DMAS_VSYNC_START_Y_ADJUST 5
+#define DMAP_VSYNC_START_Y_ADJUST_V2_1 4
 
 static int dmap_vsync_enable;
 
@@ -60,6 +62,7 @@ void mdp4_mddi_vsync_enable(struct msm_fb_data_type *mfd,
 		struct mdp4_overlay_pipe *pipe, int which)
 {
 	uint32 start_y, data, tear_en;
+	int vsync_start_y_adjust;
 
 	tear_en = (1 << which);
 
@@ -72,6 +75,13 @@ void mdp4_mddi_vsync_enable(struct msm_fb_data_type *mfd,
 				mfd->panel_info.lcd.rev < 2) /* dma_p */
 				return;
 		}
+
+		if (mdp_hw_revision < MDP4_REVISION_V2_1)
+			vsync_start_y_adjust = which ?
+				DMAS_VSYNC_START_Y_ADJUST :
+				DMAP_VSYNC_START_Y_ADJUST;
+		else
+			vsync_start_y_adjust = DMAP_VSYNC_START_Y_ADJUST_V2_1;
 
 		if (vsync_start_y_adjust <= pipe->dst_y)
 			start_y = pipe->dst_y - vsync_start_y_adjust;
@@ -117,7 +127,7 @@ void mdp4_overlay_update_lcd(struct msm_fb_data_type *mfd)
 		ptype = mdp4_overlay_format2type(mfd->fb_imgType);
 		if (ptype < 0)
 			printk(KERN_INFO "%s: format2type failed\n", __func__);
-		pipe = mdp4_overlay_pipe_alloc(ptype, MDP4_MIXER0);
+		pipe = mdp4_overlay_pipe_alloc(ptype, MDP4_MIXER0, 0);
 		if (pipe == NULL)
 			printk(KERN_INFO "%s: pipe_alloc failed\n", __func__);
 		pipe->pipe_used++;
@@ -482,6 +492,12 @@ void mdp4_mddi_overlay_kickoff(struct msm_fb_data_type *mfd,
 	mdp_pipe_kickoff(MDP_OVERLAY0_TERM, mfd);
 }
 
+#ifdef MDP4_NONBLOCKING
+	mdp_disable_irq_nosync(MDP_DMA_S_TERM);
+	if (pending_pipe)
+		complete(&pending_pipe->comp);
+#else
+#endif
 void mdp4_dma_s_update_lcd(struct msm_fb_data_type *mfd,
 				struct mdp4_overlay_pipe *pipe)
 {
@@ -557,6 +573,15 @@ void mdp4_mddi_dma_s_kickoff(struct msm_fb_data_type *mfd,
 	/* change mdp clk while mdp is idle` */
 	mdp4_set_perf_level();
 
+#ifdef MDP4_NONBLOCKING
+	down(&mfd->sem);
+	mdp_enable_irq(MDP_DMA_S_TERM);
+	mfd->dma->busy = TRUE;
+	mfd->ibuf_flushed = TRUE;
+	/* start dma_s pipe */
+	mdp_pipe_kickoff(MDP_DMA_S_TERM, mfd);
+	up(&mfd->sem);
+#else
 	mdp_enable_irq(MDP_DMA_S_TERM);
 	mfd->dma->busy = TRUE;
 	mfd->ibuf_flushed = TRUE;
@@ -566,6 +591,7 @@ void mdp4_mddi_dma_s_kickoff(struct msm_fb_data_type *mfd,
 	/* wait until DMA finishes the current job */
 	wait_for_completion(&mfd->dma->comp);
 	mdp_disable_irq(MDP_DMA_S_TERM);
+#endif
 }
 
 void mdp4_mddi_overlay_dmas_restore(void)

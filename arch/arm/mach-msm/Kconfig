@@ -45,6 +45,7 @@ config ARCH_MSM7X30
 	select MSM_GPIOMUX
 	select RESERVE_FIRST_PAGE
 	select MSM_DALRPC
+	select ARCH_HAS_HOLES_MEMORYMODEL
 
 config ARCH_QSD8X50
 	bool "QSD8X50"
@@ -266,6 +267,104 @@ config MACH_MSM7X30_FLUID
        help
          Support for the Qualcomm MSM7x30 FLUID eval board.
 
+config MACH_SEMC_ZEUS
+	depends on ARCH_MSM7X30
+	depends on !MSM_STACKED_MEMORY
+	select SUPPORT_ALIEN_USB_CHARGER
+	select USE_PMIC_CHARGING_ON_AMSS
+	default y
+	bool "SonyEricsson Zeus"
+	help
+	  Support for the SonyEricsson Zeus devices.
+
+config MACH_SEMC_ANZU
+	depends on ARCH_MSM7X30
+	depends on !MSM_STACKED_MEMORY
+	select TI1271
+	select SUPPORT_ALIEN_USB_CHARGER
+	default y
+	bool "SonyEricsson Anzu"
+	help
+	  Support for the SonyEricsson Anzu devices.
+
+config MACH_SEMC_HALLON
+	depends on ARCH_MSM7X30
+	depends on !MSM_STACKED_MEMORY
+	select TI1271
+	select SUPPORT_ALIEN_USB_CHARGER
+	default y
+	bool "SonyEricsson Hallon"
+	help
+	  Support for the SonyEricsson Hallon devices.
+
+config MACH_SEMC_IYOKAN
+	depends on ARCH_MSM7X30
+	depends on !MSM_STACKED_MEMORY
+	select TI1271
+	select SUPPORT_ALIEN_USB_CHARGER
+	default y
+	bool "SonyEricsson Iyokan"
+	help
+	  Support for the SonyEricsson Iyokan devices.
+
+config MACH_SEMC_URUSHI
+	depends on ARCH_MSM7X30
+	depends on !MSM_STACKED_MEMORY
+	select TI1271
+	select SUPPORT_ALIEN_USB_CHARGER
+	default y
+	bool "SonyEricsson Urushi"
+	help
+	  Support for the SonyEricsson Urushi devices.
+
+config MACH_SEMC_SMULTRON
+	depends on ARCH_MSM7X30
+	depends on !MSM_STACKED_MEMORY
+	select TI1271
+	select SUPPORT_ALIEN_USB_CHARGER
+	default y
+	bool "SonyEricsson Smultron"
+	help
+	  Support for the SonyEricsson Smultron devices.
+
+config MACH_SEMC_MANGO
+	depends on ARCH_MSM7X30
+	depends on !MSM_STACKED_MEMORY
+	select TI1271
+	default n
+	bool "SonyEricsson Mango"
+	help
+	  Support for the SonyEricsson Mango devices.
+
+config MACH_SEMC_STRAWBERRY
+	depends on ARCH_MSM7X30
+	depends on !MSM_STACKED_MEMORY
+	select TI1271
+	default n
+	bool "SonyEricsson Strawberry"
+	help
+	  Support for the SonyEricsson Strawberry devices.
+
+config MACH_SEMC_AKANE
+	depends on ARCH_MSM7X30
+	depends on !MSM_STACKED_MEMORY
+	select TI1271
+	select SUPPORT_ALIEN_USB_CHARGER
+	default y
+	bool "SonyEricsson Akane"
+	help
+	  Support for the SonyEricsson Akane devices.
+
+config MACH_SEMC_AZUSA
+	depends on ARCH_MSM7X30
+	depends on !MSM_STACKED_MEMORY
+	select TI1271
+	select SUPPORT_ALIEN_USB_CHARGER
+	default y
+	bool "SonyEricsson Azusa"
+	help
+	  Support for the SonyEricsson Azusa devices.
+
 config MACH_SAPPHIRE
 	depends on ARCH_MSM7X01A
 	default n
@@ -477,6 +576,12 @@ config MACH_MSM8X60_QT
 	help
 	  Support for the Qualcomm MSM8x60 QT board.
 
+config MACH_SEMC_FUJI_NOZOMI_DCM
+        depends on ARCH_MSM8X60
+        default n
+        bool "SEMC Nozomi_dcm"
+        help
+          Support for the SEMC Nozomi_dcm device.
 endmenu
 
 config MSM_STACKED_MEMORY
@@ -537,6 +642,19 @@ choice
 	config MSM_AMSS_VERSION_6225
 		bool "6.2.20 + New ADSP"
 endchoice
+
+config TI1271
+	bool "Use connectivity driver and config for TI1271"
+	default n
+	select WIRELESS_EXT
+	select WEXT_PRIV
+	help
+	  This option enables support for TI1271 Wilink driver.
+
+config BCM4330
+	tristate "Broadcom 4330 wireless cards support"
+	select WIRELESS_EXT
+	select WEXT_PRIV
 
 config MSM_DEBUG_UART
 	int
@@ -814,7 +932,7 @@ config MSM_SMD_DEBUG
 	  between the ARM9 and ARM11
 
 config MSM_SDIO_AL
-	depends on ((ARCH_MSM7X30 || MACH_MSM8X60_CHARM_FFA || MACH_MSM8X60_CHARM_SURF) && HAS_WAKELOCK)
+	depends on ((ARCH_MSM7X30 || MACH_MSM8X60_CHARM_FFA || MACH_MSM8X60_CHARM_SURF ) && HAS_WAKELOCK)
 	default y
 	tristate "SDIO-Abstraction-Layer"
 	help
@@ -1184,10 +1302,11 @@ config MSM_DMA_TEST
 	  and ioctls for testing the MSM dma system.
 
 config WIFI_CONTROL_FUNC
+	depends on BCM4329
 	bool "Enable WiFi control function abstraction"
 	help
 	  Enables Power/Reset/Carddetect function abstraction
-	
+
 config WIFI_MEM_PREALLOC
 	depends on WIFI_CONTROL_FUNC
 	bool "Preallocate memory for WiFi buffers"
@@ -1218,9 +1337,37 @@ config AUDIO_ENHANCED_AAC_PLUS
 config SURF_FFA_GPIO_KEYPAD
 	bool "MSM SURF/FFA GPIO keypad"
 	depends on INPUT_GPIO = "y"
-	default y
+	default n
 	help
 	  Select if the GPIO keypad is attached.
+
+config MOGAMI_SLIDER
+	bool "Mogami slider"
+	depends on INPUT_GPIO = "y"
+	default n
+	help
+	  Select if GPIO slider switch is attached.
+
+config ZEUS_GPIO_KEYPAD
+        bool "Zeus GPIO keypad"
+        depends on ARCH_MSM7X30
+        depends on INPUT_GPIO = "y"
+        default n
+        help
+          Select if the GPIO keypad is attached.
+
+config MOGAMI_VIBRATOR
+	bool "Mogami Vibrator"
+	default n
+	help
+	  Select to get vibrator support on the Mogami board
+
+config MOGAMI_VIBRATOR_ON_VOLTAGE
+	int "Mogami Vibrator on voltage(mV)"
+	default "2700"
+	depends on MOGAMI_VIBRATOR
+	help
+	  Set value in milli voltage(mV). Default voltage is 2700mV.
 
 config MSM_SLEEP_TIME_OVERRIDE
 	bool "Allow overriding suspend/sleep time with PM module parameter"
@@ -1441,6 +1588,24 @@ config MSM_STANDALONE_POWER_COLLAPSE
        bool "Enable standalone power collapse"
        default n
 
+config MSM_GSBI5_UART
+	bool "Enable GSBI5 UART device"
+	default n
+	help
+	  This enables GSBI5 configured into UART.
+
+config MSM_GSBI7_UART
+	bool "Enable GSBI7 UART device"
+	default n
+	help
+	  This enables GSBI7 configured into UART.
+
+config MSM_GSBI5_I2C
+	bool "Enable GSBI5 I2C device"
+	default n
+	help
+	  This enables GSBI5 configured into I2C.
+
 config MSM_GSBI9_UART
 	bool "Enable GSBI9 UART device"
 	default n
@@ -1455,6 +1620,88 @@ config MSM_SHOW_RESUME_IRQ
 		This option logs wake up interrupts that have triggered just before
 		the resume loop unrolls. Say Y if you want to debug why the system
 		resumed.
+
+config PMIC_TIME
+	bool "Export pmic time as sysfs entry"
+	depends on (ARCH_MSM)
+	default n
+	help
+	  This exports pmic time in a sysfs entry.
+
+config SEMC_RPC_SERVER_HANDSET
+	bool "Enable SEMC handset rpc dispatcher"
+	depends on ARCH_MSM7X30 && MSM_ONCRPCROUTER && !MSM_RPCSERVER_HANDSET
+	default y
+	help
+	 This enables the SEMC version of rpc_server_handset message dispatcher.
+	 This cannot cooperate with MSM_RPCSERVER_HANDSET. If this is set,
+	 an error will be generated.
+
+config SIMPLE_REMOTE_PLATFORM
+	bool "Simple Remote platform specific driver"
+	default n
+	help
+	  Provides support for detecting 3.5mm audio jack, such as wired
+	  headset. This is the platform specific layer.
+
+config SIMPLE_REMOTE_INVERT_PLUG_DETECTION_STATE
+	bool "Invert state of plug detection"
+	depends on SIMPLE_REMOTE_PLATFORM
+	help
+	  This option enables to invert headphone plug detection state,
+	  currently the plug detection state was low state when headphone
+	  was inserted, but it is high state on some products, so that
+	  we need invert this state on these products.
+
+config CRADLE_SUPPORT
+       bool "This HW supports docking cradle"
+       depends on SIMPLE_REMOTE_PLATFORM
+       default n
+       help
+        Provides support for docking cradle. Depends on simple remote
+	HW specific driver.
+
+config USB_PRODUCT_SUFFIX
+	hex "Suffix of USB product id"
+	default 0
+
+config USB_HS_DRV_AMPLITUDE
+	int "USB high speed driver amplitude ratio"
+	range 0 4
+	default 0
+	help
+	  Set 0 if ratio is HS_DRV_AMPLITUDE_DEFAULT
+	  Set 1 if ratio is HS_DRV_AMPLITUDE_ZERO_PERCENT
+	  Set 2 if ratio is HS_DRV_AMPLITUDE_25_PERCENTI
+	  Set 3 if ratio is HS_DRV_AMPLITUDE_5_PERCENT
+	  Set 4 if ratio is HS_DRV_AMPLITUDE_75_PERCENT
+
+	  The ratio is defined in kernel\arch\arm\mach-msm\include\mach\msm_hsusb.h
+
+config PMIC_GPIO_25
+	bool "Enable PMIC_GPIO_25 support"
+	default n
+	help
+	  This enables the PMIC_GPIO_25 support.
+
+config USE_PMIC_CHARGING_ON_AMSS
+	bool "Charging functionality on PMIC on AMSS"
+	depends on ARCH_MSM7X30
+	default n
+
+config SEMC_MOGAMI_FELICA_SUPPORT
+	bool "Enable Mogami FeliCa support"
+	depends on ARCH_MSM7X30
+	default n
+	help
+	  This enables FeliCa support on a Mogami product.
+
+config SEMC_MOGAMI_IRDA
+	bool "Enable Mogami IrDA support"
+	depends on ARCH_MSM7X30
+	default n
+	help
+	  This enables the Mogami IrDA support.
 
 config BT_MSM_PINTEST
 	tristate "MSM Bluetooth Pin Connectivity Test"
@@ -1491,6 +1738,42 @@ config MSM_AUDIO_QDSP6
           Enable HW audio support in QDSP6.
           QDSP6 can support HW encoder & decoder and audio processing
 
+config SEMC_CHARGER_USB_ARCH
+	bool "Support USB interface for charger"
+	default n
+	help
+	  This enables USB interface for charger.
+
+config SEMC_CHARGER_CRADLE_ARCH
+       bool "Support Cradle for charging"
+       default n
+       help
+	  This enables cradle for charging.
+
+config PMIC8058_MIC_BIAS
+	bool "Enable direct access to pmic8058"
+	default n
+	help
+	  This enables extra mic bias control.
+
+config PMIC8058_MDM_ANTENA_SWITCH
+	bool "Enable pmic8058 MDM antena switch"
+	default n
+	help
+	  This enables PMIC8058 MDM antena switch.
+
+config PMIC8058_LEDS
+	bool "Enable pmic8058 LEDs"
+	default n
+	help
+	  This enables PMIC8058 LEDs.
+
+config SEMC_SWIQI
+	bool "Enable SWIQI"
+	default n
+	help
+	  This enables SWIQI.
+
 config MSM_SCHED_FAST_CPU_ONLINE
 	bool "Fast scheduler update for CPU online"
 	depends on ARCH_MSM8X60
@@ -1498,5 +1781,19 @@ config MSM_SCHED_FAST_CPU_ONLINE
 	help
 	  Bypass scheduler domain reconstruction when onlining the second
 	  CPU on 8X60 to speed up operation.
+
+config FUJI_PMIC_KEYPAD
+	bool "Fuji PMIC Keypad"
+	depends on ARCH_MSM8X60
+	default n
+	help
+	  This enables Fuji PMIC Keypad support.
+
+config FUJI_GPIO_KEYPAD
+	bool "Enable Fuji gpio keypad support"
+	depends on ARCH_MSM8X60
+	default n
+	help
+	  This enables the Fuji gpio keypad support.
 
 endif

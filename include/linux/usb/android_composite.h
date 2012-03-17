@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2008 Google, Inc.
  * Author: Mike Lockwood <lockwood@android.com>
+ * Copyright (C) 2010-2011 Sony Ericsson Mobile Communications AB.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -19,6 +20,11 @@
 
 #include <linux/usb/composite.h>
 #include <linux/if_ether.h>
+
+/* Storage mode */
+#define STORAGE_MODE_NONE	0
+#define STORAGE_MODE_MSC	1
+#define STORAGE_MODE_CDROM	2
 
 struct android_usb_function {
 	struct list_head	list;
@@ -41,6 +47,7 @@ struct android_usb_product {
 	 */
 	int num_functions;
 	char **functions;
+	int msc_mode;
 };
 
 struct android_usb_platform_data {
@@ -75,6 +82,12 @@ struct android_usb_platform_data {
 	char **functions;
 };
 
+/* EUI-64 identifier format for Device Identification VPD page */
+struct eui64_id {
+	u8 ieee_company_id[3];
+	u8 vendor_specific_ext_field[5];
+};
+
 /* Platform data for "usb_mass_storage" driver. */
 struct usb_mass_storage_platform_data {
 	/* Contains values for the SC_INQUIRY SCSI command. */
@@ -85,6 +98,17 @@ struct usb_mass_storage_platform_data {
 	char can_stall;
 	/* number of LUNS */
 	int nluns;
+
+	/* Information for CD-ROM */
+	char *cdrom_vendor;
+	char *cdrom_product;
+	int cdrom_release;
+
+	/* number of CD-ROM LUNS */
+	int cdrom_nluns;
+
+	char *serial_number;
+	struct eui64_id eui64_id;
 };
 
 /* Platform data for USB ethernet driver. */
@@ -98,5 +122,10 @@ extern void android_register_function(struct android_usb_function *f);
 
 extern int android_enable_function(struct usb_function *f, int enable);
 
+#ifdef CONFIG_USB_ANDROID_GG
+extern void android_enable_usb_gg(void);
+#endif
+
+extern int android_get_msc_mode(struct device *dev);
 
 #endif	/* __LINUX_USB_ANDROID_H */

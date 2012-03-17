@@ -349,6 +349,26 @@ void mdp4_clear_lcdc(void)
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 }
 
+void mdp4_block_reset(unsigned char block)
+{
+	switch (block) {
+	case 1: /* mixer0 */
+		break;
+	case 2: /* mixer1 */
+		mdp4_sw_reset(0x04);
+		mdp4_mixer_blend_init(1);
+		mdp4_vg_qseed_init(1);
+		mdp4_vg_csc_setup(1);
+		mdp4_mixer1_csc_setup();
+		mdp4_mixer_gc_lut_setup(1);
+		mdp4_vg_igc_lut_setup(1);
+		mdp4_rgb_igc_lut_setup(1);
+		break;
+	default:
+		break;
+	}
+}
+
 irqreturn_t mdp4_isr(int irq, void *ptr)
 {
 	uint32 isr, mask, panel;
@@ -374,6 +394,7 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 		/* When underun occurs mdp clear the histogram registers
 		that are set before in hw_init so restore them back so
 		that histogram works.*/
+		pr_err("%s: MDP PRIMARY UNDERRUN\n", __func__);
 		MDP_OUTP(MDP_BASE + 0x95010, 1);
 		outpdw(MDP_BASE + 0x9501c, INTR_HIST_DONE);
 		if (mdp_is_hist_start == TRUE) {
@@ -383,8 +404,11 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 		}
 	}
 
-	if (isr & INTR_EXTERNAL_INTF_UDERRUN)
+	if (isr & INTR_EXTERNAL_INTF_UDERRUN) {
+		mdp4_block_reset(2);
 		mdp4_stat.intr_underrun_e++;
+		pr_err("%s: MDP EXTERNAL UNDERRUN\n", __func__);
+	}
 
 	isr &= mask;
 

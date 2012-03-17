@@ -44,6 +44,10 @@ struct mmc_platform_data {
 	unsigned char wpswitch_polarity;
 	struct msm_mmc_slot_reg_data *vreg_data;
 	int is_sdio_al_client;
+#ifdef CONFIG_SEMC_ZEUS_WLAN
+	int wlan_gpio_en;
+	int wlan_gpio_irq;
+#endif
 };
 
 #endif

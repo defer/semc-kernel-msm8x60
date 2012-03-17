@@ -39,6 +39,10 @@
 #include "msm_fb.h"
 #include "mdp4.h"
 
+
+#define MSM_AXI_QOS_DTV_ON     192000
+
+
 static int dtv_probe(struct platform_device *pdev);
 static int dtv_remove(struct platform_device *pdev);
 
@@ -134,11 +138,7 @@ static int dtv_on(struct platform_device *pdev)
 #ifdef CONFIG_MSM_NPA_SYSTEM_BUS
 	pm_qos_rate = MSM_AXI_FLOW_MDP_DTV_720P_2BPP;
 #else
-	if (panel_pixclock_freq > 58000000)
-		/* pm_qos_rate should be in Khz */
-		pm_qos_rate = panel_pixclock_freq / 1000 ;
-	else
-		pm_qos_rate = 58000;
+	pm_qos_rate = MSM_AXI_QOS_DTV_ON;
 #endif
 	mdp4_extn_disp = 1;
 #ifdef CONFIG_MSM_BUS_SCALING

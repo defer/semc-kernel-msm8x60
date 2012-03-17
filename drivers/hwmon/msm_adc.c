@@ -86,6 +86,7 @@ struct msm_adc_drv {
 	struct workqueue_struct		*wq;
 	atomic_t			online;
 	atomic_t			total_outst;
+	atomic_t			registered;
 	wait_queue_head_t		total_outst_wait;
 
 	/*  EPM variables  */
@@ -102,6 +103,13 @@ static bool epm_fluid_enabled;
 
 /* Needed to support file_op interfaces */
 static struct msm_adc_drv *msm_adc_drv;
+
+/*
+ workaround fix
+ It will be removed when root cause will be fixed.
+*/
+static int conv_first_request;
+static DEFINE_MUTEX(first_lock);
 
 static ssize_t msm_adc_show_curr(struct device *dev,
 				struct device_attribute *devattr, char *buf);
@@ -731,6 +739,23 @@ static int msm_adc_blocking_conversion(struct msm_adc_drv *msm_adc,
 	struct msm_adc_platform_data *pdata =
 					msm_adc_drv->pdev->dev.platform_data;
 	struct msm_adc_channels *channel = &pdata->channel[hwmon_chan];
+	/*
+		workaround fix
+		It will be removed when root cause will be fixed.
+	*/
+	int ret;
+
+	mutex_lock(&first_lock);
+	if (!conv_first_request) {
+		ret = pm8058_xoadc_calib_device(channel->adc_dev_instance);
+		if (ret) {
+			mutex_unlock(&first_lock);
+			pr_err("pmic8058 xoadc calibration failed, retry\n");
+			return ret;
+		}
+		conv_first_request = 1;
+	}
+	mutex_unlock(&first_lock);
 
 	channel->adc_access_fn->adc_slot_request(channel->adc_dev_instance,
 									&slot);
@@ -744,7 +769,7 @@ static int msm_adc_blocking_conversion(struct msm_adc_drv *msm_adc,
 		slot->chan_adc_calib = channel->adc_calib_type;
 		queue_work(msm_adc_drv->wq, &slot->work);
 
-		wait_for_completion_interruptible(&slot->comp);
+		wait_for_completion(&slot->comp);
 		*result = slot->conv.result;
 		channel->adc_access_fn->adc_restore_slot(
 					channel->adc_dev_instance, slot);
@@ -763,6 +788,9 @@ int32_t adc_channel_open(uint32_t channel, void **h)
 
 	if (!msm_adc_drv)
 		return -EFAULT;
+
+	if (!atomic_read(&msm_adc->registered))
+		return -ENODEV;
 
 #ifdef CONFIG_PMIC8058_XOADC
 	if (pm8058_xoadc_registered() <= 0)
@@ -818,6 +846,23 @@ int32_t adc_channel_request_conv(void *h, struct completion *conv_complete_evt)
 					msm_adc_drv->pdev->dev.platform_data;
 	struct msm_adc_channels *channel = &pdata->channel[client->adc_chan];
 	struct adc_conv_slot *slot;
+	/*
+		workaround fix
+		It will be removed when root cause will be fixed.
+	*/
+	int ret;
+
+	mutex_lock(&first_lock);
+	if (!conv_first_request) {
+		ret = pm8058_xoadc_calib_device(channel->adc_dev_instance);
+		if (ret) {
+			mutex_unlock(&first_lock);
+			pr_err("pmic8058 xoadc calibration failed, retry\n");
+			return ret;
+		}
+		conv_first_request = 1;
+	}
+	mutex_unlock(&first_lock);
 
 	channel->adc_access_fn->adc_slot_request(channel->adc_dev_instance,
 									&slot);
@@ -1464,6 +1509,7 @@ static int msm_adc_probe(struct platform_device *pdev)
 			msm_rpc_adc_init(pdev);
 	}
 
+	atomic_set(&msm_adc->registered, 1);
 	pr_info("msm_adc successfully registered\n");
 
 	return 0;
@@ -1483,6 +1529,8 @@ static int __devexit msm_adc_remove(struct platform_device *pdev)
 	atomic_set(&msm_adc->online, 0);
 
 	atomic_set(&msm_adc->rpc_online, 0);
+
+	atomic_set(&msm_adc->registered, 0);
 
 	misc_deregister(&msm_adc->misc);
 

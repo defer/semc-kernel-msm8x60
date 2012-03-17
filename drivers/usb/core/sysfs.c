@@ -95,6 +95,9 @@ static DEVICE_ATTR(name, S_IRUGO, show_##name, NULL);
 usb_string_attr(product);
 usb_string_attr(manufacturer);
 usb_string_attr(serial);
+#ifdef CONFIG_USB_OTG_NOTIFICATION
+usb_string_attr(otg_dev_info);
+#endif
 
 static ssize_t
 show_speed(struct device *dev, struct device_attribute *attr, char *buf)
@@ -601,6 +604,9 @@ static struct attribute *dev_attrs[] = {
 	&dev_attr_bMaxPacketSize0.attr,
 	&dev_attr_speed.attr,
 	&dev_attr_busnum.attr,
+#ifdef CONFIG_USB_OTG_NOTIFICATION
+	&dev_attr_otg_dev_info.attr,
+#endif
 	&dev_attr_devnum.attr,
 	&dev_attr_devpath.attr,
 	&dev_attr_version.attr,

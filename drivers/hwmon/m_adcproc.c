@@ -21,6 +21,27 @@
 
 #define KELVINMIL_DEGMIL	273160
 
+#ifdef CONFIG_BATTERY_SEMC_ARCH
+static const struct adc_map_pt adcmap_batttherm[] = {
+	{885,	-20},
+	{725,	  0},
+	{674,	  5},
+	{621,	 10},
+	{570,	 15},
+	{520,	 20},
+	{473,	 25},
+	{430,	 30},
+	{392,	 35},
+	{357,	 40},
+	{327,	 45},
+	{301,	 50},
+	{280,	 55},
+	{261,	 60},
+	{244,	 65},
+	{232,	 70},
+	{185,	100}
+};
+#else
 static const struct adc_map_pt adcmap_batttherm[] = {
 	{2020,	-30},
 	{1923,	-20},
@@ -36,6 +57,7 @@ static const struct adc_map_pt adcmap_batttherm[] = {
 	{453,	 70},
 	{364,	 80}
 };
+#endif
 
 static const struct adc_map_pt adcmap_msmtherm[] = {
 	{2150,	-30},

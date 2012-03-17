@@ -246,3 +246,10 @@ config USB_ISIGHTFW
 	  driver beforehand. Tools for doing so are available at
 	  http://bersace03.free.fr
 
+config USB_NCP373
+	bool "ON Semiconductor Load switch NCP373 support"
+	depends on USB
+	default n
+	help
+	  Say Y here if your device uses NCP373.
+

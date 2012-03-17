@@ -475,6 +475,13 @@ config PMIC8058_VIBRATOR
 	  This option enables device driver support for the vibrator
 	  on Qualcomm PM8058 chip.
 
+config PMIC8058_VIBRATOR_ON_VOLTAGE
+	int "PM8058 vibrator on voltage(mV)"
+	default "3000"
+	depends on PMIC8058_VIBRATOR
+	help
+	  Set value in milli voltage(mV). Default voltage is 3000mV.
+
 config PMIC8058_NFC
 	tristate "Qualcomm PM8058 support for Near Field Communication"
 	depends on PMIC8058
@@ -482,6 +489,12 @@ config PMIC8058_NFC
 	help
 	  Qualcomm PM8058 chip has a module to support NFC (Near Field
 	  Communication). This option enables the driver to support it.
+
+config SEMC_FELICA_SUPPORT
+	bool "Enable FeliCa support"
+	default n
+	help
+	  This option enables support for FeliCa.
 
 config PMIC8058_UPL
 	tristate "Qualcomm PM8058 support for User Programmable Logic"
@@ -518,6 +531,58 @@ config PMIC8058_BATTALARM
 	  This option enables support for the battery alarm module on the
 	  Qualcomm PM8058 PMIC chip.  This support allows for configuration of
 	  the alarm module as well as interrupt handling.
+	  
+config LM3560
+	tristate "LED driver for LM3560"
+	default n
+	depends on I2C
+	help
+	  This option enables support for LM3560
+	  led controller.
+
+config LM3561
+	tristate "LED driver for LM3561"
+	default n
+	depends on I2C
+	help
+	  This option enables support for LM3561
+	  led controller.
+
+config FPC_CONNECTOR_TEST
+	bool "Flat printed circuit cable test driver"
+	default n
+	help
+	  This option enables support FPC cable
+	  connection test.
+
+config ZEUS_ESD
+	depends on ARCH_MSM
+	bool "ESD event detection"
+	default n
+	---help---
+	  This will enable detection of ESD events which are logged.
+
+config SEMC_ONESEG_TUNER_PM
+	tristate "SEMC Oneseg tuner pm driver for SMT-VJ180"
+	default n
+	depends on GENERIC_GPIO
+	help
+	  Select this module to enable SEMC Oneseg Tuner PM Driver.
+
+config RAMDUMP_CRASH_LOGS
+	bool "ramdumpinfo and amsslog as proc entries"
+	default n
+	depends on ARCH_MSM
+	help
+	  This will enable /proc/ramdumpinfo and /proc/last_amsslog
+	  on a reboot after crash.
+
+config NFC_PN544
+	tristate "NFC driver for PN544"
+	default n
+	depends on I2C
+	help
+	  This option enables support for PN544.
 
 config TZCOM
 	tristate "Trustzone Communicator driver"
@@ -532,5 +597,6 @@ source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
 source "drivers/misc/iwmc3200top/Kconfig"
 source "drivers/misc/video_core/720p/Kconfig"
+source "drivers/misc/mpu3050/Kconfig"
 
 endif # MISC_DEVICES

@@ -601,7 +601,7 @@ static int marimba_probe(struct i2c_client *client,
 						0x55);
 		}
 		if (!marimba->client) {
-			dev_err(&marimba->client->dev,
+			printk(KERN_ERR
 				"can't attach client %d\n", i);
 			status = -ENOMEM;
 			goto fail;

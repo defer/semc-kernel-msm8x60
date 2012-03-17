@@ -4,6 +4,7 @@
 
 # infrastructure
 obj-$(CONFIG_USB_OTG_UTILS)	+= otg.o
+obj-$(CONFIG_USB_OTG_UTILS)	+= otg_event.o
 
 # transceiver drivers
 obj-$(CONFIG_USB_GPIO_VBUS)	+= gpio_vbus.o

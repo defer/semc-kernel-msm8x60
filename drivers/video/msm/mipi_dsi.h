@@ -61,6 +61,7 @@
 #define MIPI_DSI_PANEL_VGA	0
 #define MIPI_DSI_PANEL_WVGA	1
 #define MIPI_DSI_PANEL_WVGA_PT	2
+#define MIPI_DSI_PANEL_WXGA_PT	3
 
 #define DSI_PANEL_MAX	2
 
@@ -145,6 +146,17 @@ struct dsi_clk_desc {
 	uint32 pre_div_func;
 };
 
+struct dsiphy_pll_divider_config {
+	u32 clk_rate;
+	u32 fb_divider;
+	u32 ref_divider_ratio;
+	u32 bit_clk_divider;	/* oCLK1 */
+	u32 byte_clk_divider;	/* oCLK2 */
+	u32 dsi_clk_divider;	/* oCLK3 */
+};
+
+extern struct dsiphy_pll_divider_config pll_divider_config;
+
 #define DSI_HOST_HDR_SIZE	4
 #define DSI_HDR_LAST		BIT(31)
 #define DSI_HDR_LONG_PKT	BIT(30)
@@ -159,6 +171,12 @@ struct dsi_clk_desc {
 #define MIPI_DSI_MRPS	0x04  /* Maximum Return Packet Size */
 
 #define MIPI_DSI_LEN 8 /* 4 x 4 - 6 - 2, bytes dcs header+crc-align  */
+#define DSI_SHORT_PKT_LEN 4 /* short packet = |di|data0|data1| */
+#define DSI_SHORT_PKT_DATA_LEN 2 /* data length of short packet */
+#define DSI_SHORT_PKT_DI_LEN 1 /* Data identification size of short packet */
+#define DSI_SHORT_PKT_ECC_LEN 1 /* ECC size of short packet */
+#define DSI_LONG_PKT_HDR_LEN 4 /* Header size of long packet */
+#define DSI_LONG_PKT_CRC_LEN 2 /*CRC size of long packet */
 
 struct dsi_buf {
 	uint32 *hdr;	/* dsi host header */
@@ -231,6 +249,7 @@ char *mipi_dsi_buf_reserve_hdr(struct dsi_buf *dp, int hlen);
 char *mipi_dsi_buf_init(struct dsi_buf *dp);
 void mipi_dsi_init(void);
 int mipi_dsi_buf_alloc(struct dsi_buf *, int size);
+void mipi_dsi_buf_release(struct dsi_buf *dp);
 int mipi_dsi_cmd_dma_add(struct dsi_buf *dp, struct dsi_cmd_desc *cm);
 int mipi_dsi_cmds_tx(struct msm_fb_data_type *mfd,
 		struct dsi_buf *dp, struct dsi_cmd_desc *cmds, int cnt);
@@ -263,5 +282,8 @@ void mipi_dsi_sw_reset(void);
 void mipi_dsi_mdp_busy_wait(struct msm_fb_data_type *mfd);
 
 irqreturn_t mipi_dsi_isr(int irq, void *ptr);
+
+int mipi_dsi_clk_div_config(uint8 bpp, uint8 lanes,
+			uint32 *expected_dsi_pclk);
 
 #endif /* MIPI_DSI_H */

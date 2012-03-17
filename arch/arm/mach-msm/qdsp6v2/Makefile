@@ -1,6 +1,11 @@
 obj-$(CONFIG_MSM8X60_RTAC) += rtac.o
 obj-y += audio_dev_ctl.o
+ifdef CONFIG_MACH_SEMC_FUJI_NOZOMI_DCM
+obj-y += board-semc_fuji-audio.o
+else
 obj-y += board-msm8x60-audio.o
+endif
+
 obj-$(CONFIG_TIMPANI_CODEC) += snddev_icodec.o
 obj-y += snddev_ecodec.o snddev_mi2s.o snddev_virtual.o
 obj-y += apr.o apr_tal.o q6core.o dsp_debug.o
@@ -14,3 +19,4 @@ obj-y += aac_in.o qcelp_in.o evrc_in.o amrnb_in.o audio_utils.o
 obj-y += audio_mvs.o
 obj-y += audio_wma.o audio_wmapro.o audio_aac.o audio_multi_aac.o audio_utils_aio.o
 obj-$(CONFIG_FB_MSM_HDMI_MSM_PANEL) += lpa_if_hdmi.o
+obj-$(CONFIG_FB_MSM_HDMI_MSM_FUJI_PANEL) += lpa_if_hdmi.o

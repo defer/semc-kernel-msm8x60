@@ -129,6 +129,7 @@ static enum hrtimer_restart gpio_event_input_timer_func(struct hrtimer *timer)
 				key_entry->code, i, key_entry->gpio, pressed);
 		input_event(ds->input_devs->dev[key_entry->dev], ds->info->type,
 			    key_entry->code, pressed);
+		input_sync(ds->input_devs->dev[key_entry->dev]);
 	}
 
 #if 0
@@ -196,6 +197,7 @@ static irqreturn_t gpio_event_input_irq_handler(int irq, void *dev_id)
 				key_entry->gpio, pressed);
 		input_event(ds->input_devs->dev[key_entry->dev], ds->info->type,
 			    key_entry->code, pressed);
+		input_sync(ds->input_devs->dev[key_entry->dev]);
 	}
 	return IRQ_HANDLED;
 }

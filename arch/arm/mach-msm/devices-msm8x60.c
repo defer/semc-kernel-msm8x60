@@ -1,4 +1,5 @@
 /* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -94,6 +95,10 @@
 #define MSM_UART2DM_PHYS    0x19C40000
 #define MSM_UART3DM_PHYS    (MSM_GSBI3_PHYS + 0x40000)
 #define INT_UART3DM_IRQ     GSBI3_UARTDM_IRQ
+#define MSM_UART5DM_PHYS    (MSM_GSBI5_PHYS + 0x40000)
+#define INT_UART5DM_IRQ     GSBI5_UARTDM_IRQ
+#define MSM_UART7DM_PHYS    (MSM_GSBI7_PHYS + 0x40000)
+#define INT_UART7DM_IRQ     GSBI7_UARTDM_IRQ
 #define TCSR_BASE_PHYS      0x16b00000
 
 /* PRNG device */
@@ -272,6 +277,46 @@ struct platform_device msm_device_uart_dm3 = {
 	.resource = msm_uart3_dm_resources,
 };
 
+#ifdef CONFIG_MSM_GSBI7_UART
+static struct resource msm_uart7_dm_resources[] = {
+	{
+		.start = MSM_UART7DM_PHYS,
+		.end   = MSM_UART7DM_PHYS + PAGE_SIZE - 1,
+		.flags = IORESOURCE_MEM,
+	},
+	{
+		.start = INT_UART7DM_IRQ,
+		.end   = INT_UART7DM_IRQ,
+		.flags = IORESOURCE_IRQ,
+	},
+	{
+		.start = 24,
+		.end   = 25,
+		.name  = "uartdm_channels",
+		.flags = IORESOURCE_DMA,
+	},
+	{
+		.start = 10,
+		.end   = 11,
+		.name  = "uartdm_crci",
+		.flags = IORESOURCE_DMA,
+	},
+};
+
+static u64 msm_uart_dm7_dma_mask = DMA_BIT_MASK(32);
+
+struct platform_device msm_device_uart_dm7 = {
+	.name = "msm_serial_hs",
+	.id = 1,
+	.num_resources = ARRAY_SIZE(msm_uart7_dm_resources),
+	.resource = msm_uart7_dm_resources,
+	.dev            = {
+		.dma_mask = &msm_uart_dm7_dma_mask,
+		.coherent_dma_mask = DMA_BIT_MASK(32),
+	},
+};
+#endif
+
 static struct resource msm_uart12_dm_resources[] = {
 	{
 		.start = MSM_UART2DM_PHYS,
@@ -299,6 +344,36 @@ struct platform_device msm_device_uart_dm12 = {
 	.num_resources = ARRAY_SIZE(msm_uart12_dm_resources),
 	.resource = msm_uart12_dm_resources,
 };
+
+#ifdef CONFIG_MSM_GSBI5_UART
+static struct resource uart_gsbi5_resources[] = {
+	{
+		.start = MSM_UART5DM_PHYS,
+		.end   = MSM_UART5DM_PHYS + PAGE_SIZE - 1,
+		.name  = "uartdm_resource",
+		.flags = IORESOURCE_MEM,
+	},
+	{
+		.start = INT_UART5DM_IRQ,
+		.end   = INT_UART5DM_IRQ,
+		.flags = IORESOURCE_IRQ,
+	},
+	{
+		/* GSBI5 is UARTDM5 */
+		.start = MSM_GSBI5_PHYS,
+		.end   = MSM_GSBI5_PHYS + 4 - 1,
+		.name  = "gsbi_resource",
+		.flags = IORESOURCE_MEM,
+	},
+};
+
+struct platform_device msm_device_uart_gsbi5 = {
+	.name = "msm_serial_hsl",
+	.id = 3,
+	.num_resources = ARRAY_SIZE(uart_gsbi5_resources),
+	.resource = uart_gsbi5_resources,
+};
+#endif
 
 #ifdef CONFIG_MSM_GSBI9_UART
 static struct msm_serial_hslite_platform_data uart_gsbi9_pdata = {
@@ -402,6 +477,29 @@ static struct resource gsbi4_qup_i2c_resources[] = {
 		.flags	= IORESOURCE_IRQ,
 	},
 };
+
+#ifdef CONFIG_MSM_GSBI5_I2C
+static struct resource gsbi5_qup_i2c_resources[] = {
+	{
+		.name	= "qup_phys_addr",
+		.start	= MSM_GSBI5_QUP_PHYS,
+		.end	= MSM_GSBI5_QUP_PHYS + SZ_4K - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+	{
+		.name	= "gsbi_qup_i2c_addr",
+		.start	= MSM_GSBI5_PHYS,
+		.end	= MSM_GSBI5_PHYS + 4 - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+	{
+		.name	= "qup_err_intr",
+		.start	= GSBI5_QUP_IRQ,
+		.end	= GSBI5_QUP_IRQ,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+#endif
 
 static struct resource gsbi7_qup_i2c_resources[] = {
 	{
@@ -907,6 +1005,16 @@ struct platform_device msm_gsbi12_qup_i2c_device = {
 	.num_resources	= ARRAY_SIZE(gsbi12_qup_i2c_resources),
 	.resource	= gsbi12_qup_i2c_resources,
 };
+
+#ifdef CONFIG_MSM_GSBI5_I2C
+/* Use GSBI5 QUP for /dev/i2c-9 */
+struct platform_device msm_gsbi5_qup_i2c_device = {
+	.name		= "qup_i2c",
+	.id		= MSM_GSBI5_QUP_I2C_BUS_ID,
+	.num_resources	= ARRAY_SIZE(gsbi5_qup_i2c_resources),
+	.resource	= gsbi5_qup_i2c_resources,
+};
+#endif
 
 #ifdef CONFIG_I2C_SSBI
 /* 8058 PMIC SSBI on /dev/i2c-6 */
@@ -1626,34 +1734,33 @@ struct platform_device usb_diag_mdm_device = {
 #define TCSR_ADM_0_A_CRCI_MUX_SEL 0x0070
 
 #define TSIF_0_CLK       GPIO_CFG(93, 1, GPIO_CFG_INPUT, \
-	GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA)
+	GPIO_CFG_NO_PULL, GPIO_CFG_2MA)
 #define TSIF_0_EN        GPIO_CFG(94, 1, GPIO_CFG_INPUT, \
-	GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA)
+	GPIO_CFG_NO_PULL, GPIO_CFG_2MA)
 #define TSIF_0_DATA      GPIO_CFG(95, 1, GPIO_CFG_INPUT, \
-	GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA)
-#define TSIF_0_SYNC      GPIO_CFG(96, 1, GPIO_CFG_INPUT, \
-	GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA)
+	GPIO_CFG_NO_PULL, GPIO_CFG_2MA)
+
+
 #define TSIF_1_CLK       GPIO_CFG(97, 1, GPIO_CFG_INPUT, \
-	GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA)
+	GPIO_CFG_NO_PULL, GPIO_CFG_2MA)
 #define TSIF_1_EN        GPIO_CFG(98, 1, GPIO_CFG_INPUT, \
-	GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA)
+	GPIO_CFG_NO_PULL, GPIO_CFG_2MA)
 #define TSIF_1_DATA      GPIO_CFG(99, 1, GPIO_CFG_INPUT, \
-	GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA)
-#define TSIF_1_SYNC      GPIO_CFG(100, 1, GPIO_CFG_INPUT, \
-	GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA)
+	GPIO_CFG_NO_PULL, GPIO_CFG_2MA)
+
 
 static const struct msm_gpio tsif0_gpios[] = {
 	{ .gpio_cfg = TSIF_0_CLK,  .label =  "tsif_clk", },
 	{ .gpio_cfg = TSIF_0_EN,   .label =  "tsif_en", },
 	{ .gpio_cfg = TSIF_0_DATA, .label =  "tsif_data", },
-	{ .gpio_cfg = TSIF_0_SYNC, .label =  "tsif_sync", },
+
 };
 
 static const struct msm_gpio tsif1_gpios[] = {
 	{ .gpio_cfg = TSIF_1_CLK,  .label =  "tsif_clk", },
 	{ .gpio_cfg = TSIF_1_EN,   .label =  "tsif_en", },
 	{ .gpio_cfg = TSIF_1_DATA, .label =  "tsif_data", },
-	{ .gpio_cfg = TSIF_1_SYNC, .label =  "tsif_sync", },
+
 };
 
 static void tsif_release(struct device *dev)
@@ -1753,6 +1860,7 @@ struct platform_device msm_device_tsif[2] = {
 		},
 	}
 };
+
 
 #ifdef CONFIG_USB_F_SERIAL
 static struct usb_gadget_fserial_platform_data fserial_pdata = {
@@ -1996,7 +2104,6 @@ struct platform_device msm_bus_cpss_fpb = {
 })
 struct platform_device *msm_footswitch_devices[] = {
 	FS(FS_IJPEG,	"fs_ijpeg"),
-	FS(FS_MDP,	"fs_mdp"),
 	FS(FS_ROT,	"fs_rot"),
 	FS(FS_VED,	"fs_ved"),
 	FS(FS_VFE,	"fs_vfe"),
@@ -2032,9 +2139,10 @@ struct clk_lookup msm_clocks_8x60[] = {
 	CLK_8X60("gsbi_uart_clk",	GSBI3_UART_CLK, "msm_serial_hsl.2",
 			OFF),
 	CLK_8X60("gsbi_uart_clk",	GSBI4_UART_CLK,		NULL, OFF),
-	CLK_8X60("gsbi_uart_clk",	GSBI5_UART_CLK,		NULL, OFF),
+	CLK_8X60("gsbi_uart_clk",	GSBI5_UART_CLK, "msm_serial_hsl.3",
+			OFF),
 	CLK_8X60("uartdm_clk",	GSBI6_UART_CLK, "msm_serial_hs.0", OFF),
-	CLK_8X60("gsbi_uart_clk",	GSBI7_UART_CLK,		NULL, OFF),
+	CLK_8X60("uartdm_clk",	GSBI7_UART_CLK,	"msm_serial_hs.1", OFF),
 	CLK_8X60("gsbi_uart_clk",	GSBI8_UART_CLK,		NULL, OFF),
 	CLK_8X60("gsbi_uart_clk", GSBI9_UART_CLK, "msm_serial_hsl.1", OFF),
 	CLK_8X60("gsbi_uart_clk",	GSBI10_UART_CLK,	NULL, OFF),
@@ -2045,7 +2153,7 @@ struct clk_lookup msm_clocks_8x60[] = {
 	CLK_8X60("gsbi_qup_clk",	GSBI2_QUP_CLK,		NULL, OFF),
 	CLK_8X60("gsbi_qup_clk",	GSBI3_QUP_CLK, "qup_i2c.0", OFF),
 	CLK_8X60("gsbi_qup_clk",	GSBI4_QUP_CLK, "qup_i2c.1", OFF),
-	CLK_8X60("gsbi_qup_clk",	GSBI5_QUP_CLK,		NULL, OFF),
+	CLK_8X60("gsbi_qup_clk",	GSBI5_QUP_CLK, "qup_i2c.9", OFF),
 	CLK_8X60("gsbi_qup_clk",	GSBI6_QUP_CLK,		NULL, OFF),
 	CLK_8X60("gsbi_qup_clk",	GSBI7_QUP_CLK, "qup_i2c.4", OFF),
 	CLK_8X60("gsbi_qup_clk",	GSBI8_QUP_CLK, "qup_i2c.3", OFF),
@@ -2080,8 +2188,10 @@ struct clk_lookup msm_clocks_8x60[] = {
 	CLK_8X60("gsbi_pclk",		GSBI3_P_CLK, "msm_serial_hsl.2", 0),
 	CLK_8X60("gsbi_pclk",		GSBI3_P_CLK, "qup_i2c.0", OFF),
 	CLK_8X60("gsbi_pclk",		GSBI4_P_CLK, "qup_i2c.1", OFF),
-	CLK_8X60("gsbi_pclk",		GSBI5_P_CLK,		NULL, OFF),
+	CLK_8X60("gsbi_pclk",		GSBI5_P_CLK, "msm_serial_hsl.3", 0),
+	CLK_8X60("gsbi_pclk",		GSBI5_P_CLK, "qup_i2c.9", OFF),
 	CLK_8X60("uartdm_pclk",		GSBI6_P_CLK, "msm_serial_hs.0", OFF),
+	CLK_8X60("uartdm_pclk",     GSBI7_P_CLK, "msm_serial_hs.1", 0),
 	CLK_8X60("gsbi_pclk",		GSBI7_P_CLK, "qup_i2c.4", OFF),
 	CLK_8X60("gsbi_pclk",		GSBI8_P_CLK, "qup_i2c.3", OFF),
 	CLK_8X60("gsbi_pclk",		GSBI9_P_CLK, "msm_serial_hsl.1", OFF),
@@ -2113,12 +2223,16 @@ struct clk_lookup msm_clocks_8x60[] = {
 	CLK_8X60("rpm_msg_ram_pclk",	RPM_MSG_RAM_P_CLK,	NULL, OFF),
 	CLK_8X60("amp_clk",		AMP_CLK,		NULL, OFF),
 	CLK_8X60("cam_clk",		CAM_CLK,		NULL, OFF),
+        CLK_8X60("csi_src_clk",         CSI_SRC_CLK,            NULL, OFF),
 	CLK_8X60("csi_clk",		CSI0_CLK,		NULL, OFF),
+#ifdef CONFIG_SEMC_SUB_CAMERA_MODULE
+	CLK_8X60("csi1_clk",		CSI1_CLK,		NULL, OFF),
+#else
 	CLK_8X60("csi_clk",		CSI1_CLK,	  "msm_camera_ov7692.0",
 			OFF),
 	CLK_8X60("csi_clk",		CSI1_CLK,	  "msm_camera_ov9726.0",
 			OFF),
-	CLK_8X60("csi_src_clk",		CSI_SRC_CLK,		NULL, OFF),
+#endif
 	CLK_8X60("dsi_byte_div_clk",	DSI_BYTE_CLK,		NULL, OFF),
 	CLK_8X60("dsi_esc_clk",		DSI_ESC_CLK,		NULL, OFF),
 	CLK_8X60("gfx2d0_clk",		GFX2D0_CLK,		NULL, OFF),
@@ -2139,12 +2253,16 @@ struct clk_lookup msm_clocks_8x60[] = {
 	CLK_8X60("tv_src_clk",		TV_SRC_CLK,		NULL, OFF),
 	CLK_8X60("hdmi_app_clk",	HDMI_APP_CLK,		NULL, OFF),
 	CLK_8X60("vpe_clk",		VPE_CLK,		NULL, OFF),
+        CLK_8X60("vfe_clk",             VFE_CLK,                NULL, OFF),
 	CLK_8X60("csi_vfe_clk",		CSI0_VFE_CLK,		NULL, OFF),
+#ifdef CONFIG_SEMC_SUB_CAMERA_MODULE
+	CLK_8X60("csi1_vfe_clk",	CSI1_VFE_CLK,		NULL, OFF),
+#else
 	CLK_8X60("csi_vfe_clk",		CSI1_VFE_CLK,	  "msm_camera_ov7692.0",
 			OFF),
 	CLK_8X60("csi_vfe_clk",		CSI1_VFE_CLK,	  "msm_camera_ov9726.0",
 			OFF),
-	CLK_8X60("vfe_clk",		VFE_CLK,		NULL, OFF),
+#endif
 	CLK_8X60("smmu_jpegd_clk",	JPEGD_AXI_CLK,		NULL, OFF),
 	CLK_8X60("smmu_vfe_clk",	VFE_AXI_CLK,		NULL, OFF),
 	CLK_8X60("vfe_axi_clk",		VFE_AXI_CLK,		NULL, OFF),
@@ -2156,10 +2274,14 @@ struct clk_lookup msm_clocks_8x60[] = {
 	CLK_8X60("vpe_axi_clk",		VPE_AXI_CLK,		NULL, OFF),
 	CLK_8X60("amp_pclk",		AMP_P_CLK,		NULL, OFF),
 	CLK_8X60("csi_pclk",		CSI0_P_CLK,		NULL, OFF),
+#ifdef CONFIG_SEMC_SUB_CAMERA_MODULE
+	CLK_8X60("csi1_pclk",		CSI1_P_CLK,		NULL, OFF),
+#else
 	CLK_8X60("csi_pclk",		CSI1_P_CLK,	  "msm_camera_ov7692.0",
 			OFF),
 	CLK_8X60("csi_pclk",		CSI1_P_CLK,	  "msm_camera_ov9726.0",
 			OFF),
+#endif
 	CLK_8X60("dsi_m_pclk",		DSI_M_P_CLK,		NULL, OFF),
 	CLK_8X60("dsi_s_pclk",		DSI_S_P_CLK,		NULL, OFF),
 	CLK_8X60("gfx2d0_pclk",		GFX2D0_P_CLK,		NULL, OFF),

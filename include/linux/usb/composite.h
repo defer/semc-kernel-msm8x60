@@ -2,6 +2,7 @@
  * composite.h -- framework for usb gadgets which are composite devices
  *
  * Copyright (C) 2006-2008 David Brownell
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -142,9 +143,8 @@ int usb_function_deactivate(struct usb_function *);
 int usb_function_activate(struct usb_function *);
 
 int usb_interface_id(struct usb_configuration *, struct usb_function *);
-
 void usb_function_set_enabled(struct usb_function *, int);
-void usb_composite_force_reset(struct usb_composite_dev *);
+void usb_composite_force_reset(struct usb_composite_dev *, int);
 
 /**
  * ep_choose - select descriptor endpoint at current device speed
@@ -361,6 +361,14 @@ struct usb_composite_dev {
 	struct switch_dev		sw_config;
 	/* current connected state for sw_connected */
 	bool				connected;
+
+	/* used by usb_composite_force_reset to raise switch event */
+	bool				switching_composition;
+
+	/* used by usb_composite_force_reset to avoid
+	 * signalling switch changes
+	 */
+	bool				mute_switch;
 
 	struct work_struct switch_work;
 };

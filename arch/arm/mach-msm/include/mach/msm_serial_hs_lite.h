@@ -1,4 +1,5 @@
 /* Copyright (c) 2011, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011 Sony Ericsson Mobile Communications AB
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -34,6 +35,7 @@ struct msm_serial_hslite_platform_data {
 	unsigned config_gpio;
 	unsigned uart_tx_gpio;
 	unsigned uart_rx_gpio;
+	int type;
 };
 
 #endif

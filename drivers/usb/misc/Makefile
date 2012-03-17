@@ -25,6 +25,8 @@ obj-$(CONFIG_USB_USS720)	+= uss720.o
 obj-$(CONFIG_USB_SEVSEG)	+= usbsevseg.o
 
 obj-$(CONFIG_USB_SISUSBVGA)	+= sisusbvga/
+obj-$(CONFIG_USB_EHSET_TEST_FIXTURE) += ehset.o
+obj-$(CONFIG_USB_NCP373)	+= ncp373.o
 
 ifeq ($(CONFIG_USB_DEBUG),y)
 EXTRA_CFLAGS += -DDEBUG

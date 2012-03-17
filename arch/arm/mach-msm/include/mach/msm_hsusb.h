@@ -2,6 +2,7 @@
  *
  * Copyright (C) 2008 Google, Inc.
  * Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011 Sony Ericsson Mobile Communications AB.
  * Author: Brian Swetland <swetland@google.com>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -93,7 +94,11 @@ enum chg_type {
 	USB_CHG_TYPE__SDP,
 	USB_CHG_TYPE__CARKIT,
 	USB_CHG_TYPE__WALLCHARGER,
-	USB_CHG_TYPE__INVALID
+	USB_CHG_TYPE__INVALID,
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+	USB_CHG_TYPE__MIGHT_BE_HOST_PC,
+	USB_CHG_TYPE__ALIENCHARGER,
+#endif /*  CONFIG_SUPPORT_ALIEN_USB_CHARGER */
 };
 
 enum pre_emphasis_level {
@@ -213,10 +218,13 @@ struct msm_otg_platform_data {
 	void (*chg_connected)(enum chg_type chg_type);
 	void (*chg_vbus_draw)(unsigned ma);
 	int  (*chg_init)(int init);
+	int (*is_cradle_connected)(void);
 	int (*config_vddcx)(int high);
 	int (*init_vddcx)(int init);
-
+	int  (*chg_is_initialized)(void);
 	struct pm_qos_request_list *pm_qos_req_dma;
+	unsigned chg_drawable_ida;
+	int  (*platform_init)(int init);
 };
 
 struct msm_usb_host_platform_data {

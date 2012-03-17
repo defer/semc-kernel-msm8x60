@@ -288,6 +288,14 @@ config WCNSS_WLAN
 	---help---
 	  A driver for Qualcomm WCNSS WLAN feature
 
+config SEMC_ZEUS_WLAN
+	depends on MACH_SEMC_ZEUS && (!BCM4329 || !WIFI_CONTROL_FUNC)
+	bool "SEMC Zeus TI WL1271 WiFi device"
+	default y if MACH_SEMC_ZEUS
+	help
+	  Enable kernel-side support for the Ti 1271 Wlan on the SEMC
+	  Zeus Platform
+
 source "drivers/net/wireless/ath/Kconfig"
 source "drivers/net/wireless/b43/Kconfig"
 source "drivers/net/wireless/b43legacy/Kconfig"

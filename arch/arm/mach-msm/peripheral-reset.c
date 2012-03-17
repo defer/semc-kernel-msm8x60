@@ -68,7 +68,7 @@
 #define PAS_MODEM	0
 #define PAS_Q6		1
 #define PAS_DSPS	2
-#define PAS_PLAYREADY	3
+#define PAS_TZEXEC	3
 
 #define PAS_INIT_IMAGE_CMD	1
 #define PAS_MEM_CMD		2
@@ -513,19 +513,19 @@ static int shutdown_dsps_untrusted(void)
 	return 0;
 }
 
-static int init_image_playready(const u8 *metadata, size_t size)
+static int init_image_tzexec(const u8 *metadata, size_t size)
 {
-	return init_image_trusted(PAS_PLAYREADY, metadata, size);
+	return init_image_trusted(PAS_TZEXEC, metadata, size);
 }
 
-static int reset_playready(void)
+static int reset_tzexec(void)
 {
-	return auth_and_reset_trusted(PAS_PLAYREADY);
+	return auth_and_reset_trusted(PAS_TZEXEC);
 }
 
-static int shutdown_playready(void)
+static int shutdown_tzexec(void)
 {
-	return shutdown_trusted(PAS_PLAYREADY);
+	return shutdown_trusted(PAS_TZEXEC);
 }
 
 struct pil_reset_ops pil_modem_ops = {
@@ -549,11 +549,11 @@ struct pil_reset_ops pil_dsps_ops = {
 	.shutdown = shutdown_dsps_untrusted,
 };
 
-struct pil_reset_ops pil_playready_ops = {
-	.init_image = init_image_playready,
+struct pil_reset_ops pil_tzexec_ops = {
+	.init_image = init_image_tzexec,
 	.verify_blob = verify_blob,
-	.auth_and_reset = reset_playready,
-	.shutdown = shutdown_playready,
+	.auth_and_reset = reset_tzexec,
+	.shutdown = shutdown_tzexec,
 };
 
 static struct pil_device peripherals[] = {
@@ -575,12 +575,12 @@ static struct pil_device peripherals[] = {
 		.ops = &pil_q6_ops,
 	},
 	{
-		.name = "playrdy",
+		.name = "tzexec",
 		.pdev = {
-			.name = "pil_playready",
+			.name = "pil_tzexec",
 			.id = -1,
 		},
-		.ops = &pil_playready_ops,
+		.ops = &pil_tzexec_ops,
 	},
 };
 

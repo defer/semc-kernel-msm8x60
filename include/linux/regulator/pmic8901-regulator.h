@@ -1,4 +1,5 @@
 /* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -89,6 +90,7 @@ struct pm8901_vreg_pdata {
 	unsigned			pin_ctrl;
 	enum pm8901_vreg_pin_fn		pin_fn;
 	unsigned			active_high; /* For use with MPP. */
+	unsigned			level;       /* For use with MPP. */
 };
 
 #endif

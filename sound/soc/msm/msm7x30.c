@@ -1,4 +1,5 @@
 /* Copyright (c) 2008-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2010 Sony Ericsson Mobile Communications AB
  *
  * All source code in this file is licensed under the following license except
  * where indicated.
@@ -341,7 +342,7 @@ static int msm_device_put(struct snd_kcontrol *kcontrol,
 				set_freq = dev_info->sample_rate;
 
 
-			MM_ERR("device freq =%d\n", set_freq);
+			MM_INFO("device freq =%d\n", set_freq);
 			rc = dev_info->dev_ops.set_freq(dev_info, set_freq);
 			if (rc < 0) {
 				MM_ERR("device freq failed!\n");

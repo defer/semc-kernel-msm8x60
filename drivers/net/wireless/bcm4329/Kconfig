@@ -3,13 +3,15 @@ config BCM4329
 	depends on MMC
 	select WIRELESS_EXT
 	select WEXT_PRIV
+	select WIFI_CONTROL_FUNC
+	select WIFI_MEM_PREALLOC
 	---help---
 	  This module adds support for wireless adapters based on
 	  Broadcom 4329 chipset.
 
 	  This driver uses the kernel's wireless extensions subsystem.
 
-	  If you choose to build a module, it'll be called dhd. Say M if
+	  If you choose to build a module, it'll be called bcm4329. Say M if
 	  unsure.
 
 config BCM4329_FW_PATH

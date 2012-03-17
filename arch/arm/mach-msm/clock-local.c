@@ -31,6 +31,9 @@
 #include "clock.h"
 #include "clock-local.h"
 
+#undef pr_warning
+#define pr_warning(fmt, ...) printk(KERN_DEBUG fmt, ##__VA_ARGS__)
+
 #ifdef CONFIG_MSM_SECURE_IO
 #undef readl
 #undef writel
@@ -40,7 +43,7 @@
 
 /* When enabling/disabling a clock, check the halt bit up to this number
  * number of times (with a 1 us delay in between) before continuing. */
-#define HALT_CHECK_MAX_LOOPS	100
+#define HALT_CHECK_MAX_LOOPS	200
 /* For clock without halt checking, wait this long after enables/disables. */
 #define HALT_CHECK_DELAY_US	10
 

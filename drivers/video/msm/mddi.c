@@ -56,8 +56,8 @@ static void mddi_early_suspend(struct early_suspend *h);
 static void mddi_early_resume(struct early_suspend *h);
 #endif
 
-static void pmdh_clk_disable(void);
-static void pmdh_clk_enable(void);
+void pmdh_clk_disable(void);
+void pmdh_clk_enable(void);
 static struct platform_device *pdev_list[MSM_FB_MAX_DEV_LIST];
 static int pdev_list_cnt;
 static struct clk *mddi_clk;
@@ -165,7 +165,7 @@ static void pmdh_clk_disable()
 	mutex_unlock(&pmdh_clk_lock);
 }
 
-static void pmdh_clk_enable()
+void pmdh_clk_enable()
 {
 	mutex_lock(&pmdh_clk_lock);
 	if (pmdh_clk_status == 1) {
@@ -234,6 +234,7 @@ static int mddi_on(struct platform_device *pdev)
 #endif
 
 	mfd = platform_get_drvdata(pdev);
+	pmdh_clk_enable();
 	pm_runtime_get(&pdev->dev);
 	if (mddi_pdata && mddi_pdata->mddi_power_save)
 		mddi_pdata->mddi_power_save(1);
@@ -449,7 +450,6 @@ void mddi_disable(int lock)
 
 	mddi_pad_ctrl = mddi_host_reg_in(PAD_CTL);
 	mddi_host_reg_out(PAD_CTL, 0x0);
-
 	if (clk_set_min_rate(mddi_clk, 0) < 0)
 		printk(KERN_ERR "%s: clk_set_min_rate failed\n", __func__);
 

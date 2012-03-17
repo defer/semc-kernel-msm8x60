@@ -1,4 +1,5 @@
 /* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -472,7 +473,11 @@ int msm_gemini_input_buf_enqueue(struct msm_gemini_device *pgmn_dev,
 		+ buf_cmd.offset;
 	buf_p->y_len          = buf_cmd.y_len;
 
+#if defined(CONFIG_SEMC_CAMERA_MODULE) || defined(CONFIG_SEMC_SUB_CAMERA_MODULE)
+	buf_p->cbcr_buffer_addr = buf_p->y_buffer_addr + buf_cmd.cbcr_off;
+#else
 	buf_p->cbcr_buffer_addr = buf_p->y_buffer_addr + buf_cmd.y_len;
+#endif
 	buf_p->cbcr_len       = buf_cmd.cbcr_len;
 
 	buf_p->num_of_mcu_rows = buf_cmd.num_of_mcu_rows;

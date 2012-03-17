@@ -241,6 +241,16 @@ int mipi_dsi_buf_alloc(struct dsi_buf *dp, int size)
 	return size;
 }
 
+void mipi_dsi_buf_release(struct dsi_buf *dp)
+{
+	kfree(dp->start);
+	dp->start = NULL;
+	dp->end = NULL;
+	dp->data = NULL;
+	dp->size = 0;
+	dp->len = 0;
+}
+
 /*
  * mipi dsi gerneric long write
  */
@@ -814,7 +824,7 @@ void mipi_dsi_host_init(struct mipi_panel_info *pinfo)
 
 	/* from frame buffer, low power mode */
 	/* DSI_COMMAND_MODE_DMA_CTRL */
-	MIPI_OUTP(MIPI_DSI_BASE + 0x38, 0x14000000);
+	MIPI_OUTP(MIPI_DSI_BASE + 0x38, 0x15000000);
 
 	data = 0;
 	if (pinfo->te_sel)
@@ -848,7 +858,7 @@ void mipi_dsi_host_init(struct mipi_panel_info *pinfo)
 	MIPI_OUTP(MIPI_DSI_BASE + 0x010c, intr_ctrl); /* DSI_INTL_CTRL */
 
 	/* turn esc, byte, dsi, pclk, sclk, hclk on */
-	MIPI_OUTP(MIPI_DSI_BASE + 0x118, 0x23f); /* DSI_CLK_CTRL */
+	MIPI_OUTP(MIPI_DSI_BASE + 0x118, 0x3e); /* DSI_CLK_CTRL */
 
 	dsi_ctrl |= BIT(0);	/* enable dsi */
 	MIPI_OUTP(MIPI_DSI_BASE + 0x0000, dsi_ctrl);
@@ -1146,9 +1156,10 @@ int mipi_dsi_cmds_rx(struct msm_fb_data_type *mfd,
 	len = rlen;
 	diff = 0;
 
-	if (len <= 2)
-		cnt = 4;	/* short read */
-	else {
+	pr_debug("%s\n", __func__);
+	if (len <= DSI_SHORT_PKT_DATA_LEN) {
+		cnt = DSI_SHORT_PKT_LEN;	/* short read */
+	} else {
 		if (len > MIPI_DSI_LEN)
 			len = MIPI_DSI_LEN;	/* 8 bytes at most */
 
@@ -1166,10 +1177,9 @@ int mipi_dsi_cmds_rx(struct msm_fb_data_type *mfd,
 	}
 
 
-	if (mfd->panel_info.type == MIPI_CMD_PANEL) {
+	if (mfd->panel_info.type == MIPI_CMD_PANEL)
 		/* make sure mdp dma is not txing pixel data */
 		mdp4_dsi_cmd_dma_busy_wait(mfd);
-	}
 
 	spin_lock_irqsave(&dsi_mdp_lock, flag);
 	mipi_dsi_enable_irq();
@@ -1224,6 +1234,7 @@ int mipi_dsi_cmds_rx(struct msm_fb_data_type *mfd,
 	default:
 		break;
 	}
+	pr_debug("rp->len: %d\n", rp->len);
 
 	return rp->len;
 }
@@ -1290,6 +1301,8 @@ int mipi_dsi_cmd_dma_rx(struct dsi_buf *rp, int rlen)
 		*lp++ = ntohl(data);	/* to network byte order */
 		off -= 4;
 		rp->len += sizeof(*lp);
+		pr_debug("  0x%x:  0x%08x\n", off, data);
+		pr_debug("  len: %d\n", rp->len);
 	}
 
 	return rlen;

@@ -99,6 +99,27 @@ config USB_GADGET_VBUS_DRAW
 config	USB_GADGET_SELECTED
 	boolean
 
+config SUPPORT_ALIEN_USB_CHARGER
+	bool "Alien USB charger support"
+	default n
+	help
+	  Enabling this option adds alien USB charger support.
+	  Alien USB charger is an USB charger where the resistance between the
+	  data lines D+/D- is greater than 200 Ohms.
+	  Alien USB charger can look like USB host charger because of the
+	  D+/D- configuration. The difference is that Alien USB charger never
+	  enumerates.
+
+config ALIEN_USB_CHARGER_CURRENT_MA
+	int "Maximum alien USB current"
+	depends on SUPPORT_ALIEN_USB_CHARGER
+	range 0 1500
+	default 500
+	help
+	  Enter the maximum power, in milliAmperes, your device draws through USB
+	  when detected as an alien charger. The permitted range of values is
+	  0 - 1500 mA.
+
 #
 # USB Peripheral Controller Support
 #
@@ -846,7 +867,6 @@ config USB_G_PRINTER
 config USB_ANDROID
 	boolean "Android Gadget"
 	depends on SWITCH
-	default y
 	help
 	  The Android gadget driver supports multiple USB functions.
 	  The functions can be configured via a board file and may be
@@ -911,6 +931,12 @@ config USB_CSW_HACK
 	 This csw hack feature is for increasing the performance of the mass
 	 storage
 
+config USB_KDDI_SCSI_EXTENSIONS
+	boolean "SCSI Command Extenstion for KDDI Device"
+	depends on USB_ANDROID_MASS_STORAGE
+	default n
+	help
+	 The mass storage extension to communicate with KDDI application.
 
 config USB_ANDROID_MTP
 	boolean "Android MTP function"
@@ -1061,6 +1087,30 @@ config USB_F_SERIAL_SDIO
           separate transport layer u_sdio(very similar to u_serial.c)
           Say "y" to link the driver staticall
 
+config USB_REMOTE_WAKEUP
+	boolean "USB remote wakeup support"
+	depends on USB_ANDROID
+	default n
+	help
+	  USB remote wakeup support.
+
+config USB_ANDROID_MTP_ARICENT
+	boolean "Aricent USB Media Transfer Protocol driver"
+	depends on USB_ANDROID
+	help
+	  Enabling this option adds Aricent MTP support to the
+	  android gadget.
+
+	default n
+
+config USB_ANDROID_GG
+        boolean "GordonsGate driver"
+        depends on USB_ANDROID
+        default n
+        help
+         Enabling this option adds GordonsGate support to the
+         android gadget.
+
 config USB_F_SERIAL_SMD
 	boolean "generic serial function driver over SMD"
 	depends on USB_ANDROID && MSM_SMD
@@ -1165,7 +1215,6 @@ config USB_G_WEBCAM
 
 config USB_QCOM_MAEMO
         tristate "Qcom gadget compositon for Maemo"
-        default n
 	select MODEM_SUPPORT
 	select USB_CSW_HACK
 	help

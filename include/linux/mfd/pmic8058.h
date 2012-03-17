@@ -1,4 +1,5 @@
 /* Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -198,6 +199,10 @@ int pm8058_read(struct pm8058_chip *pm_chip, u16 addr, u8 *values,
 		unsigned int len);
 int pm8058_write(struct pm8058_chip *pm_chip, u16 addr, u8 *values,
 		 unsigned int len);
+
+int pmic8058_read(u16 addr, u8 *values, unsigned int len);
+
+int pmic8058_write(u16 addr, u8 *values, unsigned int len);
 
 int pm8058_gpio_config(int gpio, struct pm8058_gpio *param);
 

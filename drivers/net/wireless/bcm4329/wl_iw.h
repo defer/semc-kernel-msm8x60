@@ -68,7 +68,7 @@ typedef struct wl_iw_extra_params {
 #define	WL_IW_RSSI_GOOD		-68
 #define	WL_IW_RSSI_VERY_GOOD	-58
 #define	WL_IW_RSSI_EXCELLENT	-57
-#define	WL_IW_RSSI_INVALID	 0
+#define	WL_IW_RSSI_INVALID	-1
 #define MAX_WX_STRING		80
 #define isprint(c)		bcm_isprint(c)
 #define WL_IW_SET_ACTIVE_SCAN	(SIOCIWFIRSTPRIV+1)

@@ -1091,7 +1091,12 @@ void thermal_zone_device_update(struct thermal_zone_device *tz)
 				printk(KERN_EMERG
 				"Critical temperature reached (%ld C), \
 					shutting down.\n", temp/1000);
-				orderly_poweroff(true);
+				/*
+					workaround fix.
+					It will be removed
+					when root cause will be fixed.
+				*/
+				/* orderly_poweroff(true); */
 				}
 			}
 			break;

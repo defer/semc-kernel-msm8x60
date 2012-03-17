@@ -37,6 +37,9 @@
 #include <asm/ptrace.h>
 #include <asm/localtimer.h>
 #include <asm/smp_plat.h>
+#ifdef CONFIG_CRASH_NOTES
+#include <asm/crash_notes.h>
+#endif
 
 /*
  * as from 2.5, kernels no longer have an init_tasks structure
@@ -477,6 +480,10 @@ static void ipi_cpu_stop(unsigned int cpu)
 
 	local_fiq_disable();
 	local_irq_disable();
+#ifdef CONFIG_CRASH_NOTES
+	if (system_state == SYSTEM_BOOTING || system_state == SYSTEM_RUNNING)
+		crash_notes_save_this_cpu(1, smp_processor_id());
+#endif
 
 	while (1)
 		cpu_relax();

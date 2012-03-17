@@ -134,6 +134,9 @@ struct kgsl_driver {
 		unsigned int coherent_max;
 		unsigned int histogram[16];
 	} stats;
+
+	struct work_struct idle_callback_work;
+	void (*idle_callback)(int idle);
 };
 
 extern struct kgsl_driver kgsl_driver;

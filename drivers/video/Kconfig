@@ -2220,9 +2220,8 @@ config FB_MSM_BACKLIGHT
 
 config FB_MSM_LOGO
 	bool "MSM Frame Buffer Logo"
-	default n
 	---help---
-	  Show /initlogo.rle during boot.
+	  Show /logo.rle during boot.
 
 config FB_MSM_LCDC_HW
 	bool
@@ -2290,6 +2289,14 @@ config FB_MSM_DTV
 	bool
 	default n
 
+config FB_MSM_PANEL_ESD
+	bool "PANEL ESD support"
+	default n
+
+config FB_MSM_MDDI_NOVATEK_DISABLE_MDDI
+	bool "Disable MDDI"
+	default n
+
 config FB_MSM_EXTMDDI
 	bool
 	default n
@@ -2339,6 +2346,16 @@ config FB_MSM_MIPI_DSI_TOSHIBA
 	default n
 
 config FB_MSM_MIPI_DSI_NOVATEK
+	bool
+	select FB_MSM_MIPI_DSI
+	default n
+
+config FB_MSM_MIPI_DSI_RENESAS_R63306
+	bool
+	select FB_MSM_MIPI_DSI
+	default n
+
+config FB_MSM_MIPI_DSI_SAMSUNG_S6D6AA0
 	bool
 	select FB_MSM_MIPI_DSI
 	default n
@@ -2437,166 +2454,106 @@ config FB_MSM_OVERLAY_WRITEBACK
 	---help---
 	  Support for MDP4 OVERLAY write back mode
 
-choice
-	prompt "LCD Panel"
-	default FB_MSM_MDDI_AUTO_DETECT
+config FB_MSM_MIPI_R63306_PANEL_TMD_MDV20
+	bool "TMD MDV20 Panel"
+	select FB_MSM_MIPI_DSI_RENESAS_R63306
+	default n
 
-config FB_MSM_LCDC_PRISM_WVGA_PANEL
-	depends on FB_MSM_LCDC_HW
-	bool "LCDC Prism WVGA Panel"
-	select FB_MSM_LCDC_PRISM_WVGA
+config FB_MSM_MIPI_R63306_PANEL_TMD_MDV22
+	bool "TMD MDV22 Panel"
+	select FB_MSM_MIPI_DSI_RENESAS_R63306
+	default n
+
+config FB_MSM_MIPI_R63306_PANEL_TMD_MDW30
+	bool "TMD MDW30 Panel"
+	select FB_MSM_MIPI_DSI_RENESAS_R63306
+	default n
+
+config FB_MSM_MIPI_R63306_PANEL_SHARP_LS043K3SX01
+	bool "SHARP LS043K3SX01 Panel"
+	select FB_MSM_MIPI_DSI_RENESAS_R63306
+	default n
+
+config FB_MSM_MIPI_S6D6AA0_PANEL_SONY_ACX439AKM
+	bool "SONY ACX439AKM Panel"
+	select FB_MSM_MIPI_DSI_SAMSUNG_S6D6AA0
+	default n
+	select FB_MSM_MIPI_NOVATEK_3D_PANEL
+
+#
+# Extracted panels which will be connected to the MDDI Novatek MCU
+#
+config MDDI_NOVATEK_PANEL_TMD_MDP42
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "TMD MDP42 Panel"
+	default n
 	---help---
-	  Support for LCDC Prism WVGA (800x480) panel
+	  Support for TMD MDP42 panel connected
+	  to the MDDI Novatek micro controller
 
-config FB_MSM_LCDC_SAMSUNG_WSVGA_PANEL
-	depends on FB_MSM_LCDC_HW
-	bool "LCDC Samsung WSVGA Panel"
-	select FB_MSM_LCDC_SAMSUNG_WSVGA
+config MDDI_NOVATEK_PANEL_SHARP_LS040T8LX01
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "SHARP LS040T8LX01 Panel"
+	default n
 	---help---
-	  Support for LCDC Samsung WSVGA (1024x600) panel
+	  Support for SHARP LS040T8LX01 panel connected
+	  to the MDDI Novatek micro controller
 
-config FB_MSM_LCDC_CHIMEI_WXGA_PANEL
-	depends on FB_MSM_LCDC_HW
-	bool "LCDC Chimei WXGA Panel"
-	select FB_MSM_LCDC_CHIMEI_WXGA
+config MDDI_NOVATEK_PANEL_SHARP_LS042T3LX
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "SHARP LS042T3LX Panel"
+	default n
 	---help---
-	  Support for LCDC Chimei WXGA (1366x768) panel
+	  Support for SHARP_LS042T3LX panel connected
+	  to the MDDI Novatek micro controller
 
-config FB_MSM_LCDC_GORDON_VGA_PANEL
-	depends on FB_MSM_LCDC_HW
-	bool "LCDC Gordon VGA Panel"
-	select FB_MSM_LCDC_GORDON_VGA
+config MDDI_NOVATEK_PANEL_SONY_ACX424AKM
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "SONY ACX424AKM Panel"
+	default n
 	---help---
-	  Support for LCDC Gordon VGA (480x640) panel
+	  Support for SONY_ACX424AKM panel connected
+	  to the MDDI Novatek micro controller
 
-config FB_MSM_LCDC_TOSHIBA_WVGA_PT_PANEL
-	depends on FB_MSM_LCDC_HW
-	bool "LCDC Toshiba WVGA PT Panel"
-	select FB_MSM_LCDC_TOSHIBA_WVGA_PT
+config MDDI_NOVATEK_PANEL_SONY_ACX427AK
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "SONY ACX427AK Panel"
+	default n
 	---help---
-	  Support for LCDC Toshiba WVGA PT (480x800) panel
+	  Support for SONY_ACX427AK panel connected
+	  to the MDDI Novatek micro controller
 
-config FB_MSM_LCDC_SHARP_WVGA_PT_PANEL
-	depends on FB_MSM_LCDC_HW
-	bool "LCDC Sharp WVGA PT Panel"
-	select FB_MSM_LCDC_SHARP_WVGA_PT
+config MDDI_NOVATEK_PANEL_SONY_ACX424AK
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "SONY ACX424AK Panel"
+	default n
 	---help---
-	  Support for LCDC Sharp WVGA PT (480x800) panel
+	  Support for SONY_ACX424AK panel connected
+	  to the MDDI Novatek micro controller
 
-config FB_MSM_LCDC_AUO_WVGA_PANEL
-	depends on FB_MSM_LCDC_HW
-	bool "LCDC AUO WVGA Panel"
-	select FB_MSM_LCDC_AUO_WVGA
+config MDDI_NOVATEK_PANEL_HITACHI_DX09D09VM
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "HITACHI DX09D09VM Panel"
+	default n
 	---help---
-	  Support for LCDC AUO WVGA(480x800) panel
-	  .
-	  .
-	  .
-config FB_MSM_LCDC_SAMSUNG_OLED_PT_PANEL
-	depends on FB_MSM_LCDC_HW
-	bool "LCDC Samsung OLED PT Panel"
-	select FB_MSM_LCDC_SAMSUNG_OLED_PT
+	  Support for HITACHI_DX09D09VM panel connected
+	  to the MDDI Novatek micro controller
+
+config MDDI_NOVATEK_PANEL_SHARP_LS033T3LX01
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "SHARP LS033T3LX01 Panel"
+	default n
 	---help---
-	  Support for LCDC Samsung OLED PT (480x800) panel
-	  .
-	  .
-	  .
+	  Support for SHARP_LS033T3LX01 panel connected
+	  to the MDDI Novatek micro controller
 
-config FB_MSM_TRY_MDDI_CATCH_LCDC_PRISM
-	depends on FB_MSM_LCDC_HW
-	bool "MDDI Panel Auto Detect + LCDC Prism WVGA"
-	select FB_MSM_MDDI_AUTO_DETECT
-	select FB_MSM_LCDC_PRISM_WVGA
-	select FB_MSM_LCDC_GORDON_VGA
-	select FB_MSM_LCDC_WXGA
-	select FB_MSM_LCDC_TOSHIBA_WVGA_PT
-	select FB_MSM_LCDC_SHARP_WVGA_PT
-	select FB_MSM_LCDC_ST15_WXGA
+config MDDI_NOVATEK_PANEL_TMD_LT033MDV1000
+	depends on FB_MSM_MDDI_NOVATEK_FWVGA
+	bool "TMD LT033MDV1000 Panel"
+	default n
 	---help---
-	  Support for MDDI panel auto detect.
-	  If it can't find any MDDI panel, it will load an LCDC panel.
-
-config FB_MSM_MIPI_PANEL_DETECT
-	depends on FB_MSM_LCDC_HW
-	bool "MIPI Panel Detect + LCDC Panel Auto Detect"
-	select FB_MSM_MIPI_TOSHIBA_VIDEO_WVGA_PT
-	select FB_MSM_LCDC_AUTO_DETECT
-	select FB_MSM_LCDC_SAMSUNG_WSVGA
-	select FB_MSM_LCDC_AUO_WVGA
-	select FB_MSM_LCDC_SAMSUNG_OLED_PT
-
-config FB_MSM_MDDI_PANEL_AUTO_DETECT
-	bool "MDDI Panel Auto Detect"
-	select FB_MSM_MDDI_AUTO_DETECT
-	---help---
-	  Support for MDDI panel auto detect
-
-config FB_MSM_LCDC_PANEL_AUTO_DETECT
-	bool "LCDC Panel Auto Detect"
-	select FB_MSM_LCDC_AUTO_DETECT
-	select FB_MSM_LCDC_SAMSUNG_WSVGA
-	select FB_MSM_LCDC_AUO_WVGA
-	select FB_MSM_LCDC_SAMSUNG_OLED_PT
-	---help---
-	  Support for LCDC panel auto detect
-	  .
-	  .
-	  .
-
-config FB_MSM_MDDI_PRISM_WVGA
-	bool "MDDI Prism WVGA Panel"
-	select FB_MSM_MDDI
-	---help---
-	  Support for MDDI Prism WVGA (800x480) panel
-
-config FB_MSM_MDDI_TOSHIBA_WVGA_PORTRAIT
-	bool "MDDI Toshiba WVGA Portrait Panel"
-	select FB_MSM_MDDI_TOSHIBA_COMMON
-	---help---
-	  Support for MDDI Toshiba WVGA (480x800) panel
-
-config FB_MSM_MDDI_TOSHIBA_VGA
-	bool "MDDI Toshiba VGA Panel"
-	select FB_MSM_MDDI_TOSHIBA_COMMON_VGA
-	---help---
-	  Support for MDDI Toshiba VGA (480x640) and QCIF (176x220) panel
-
-config FB_MSM_MDDI_TOSHIBA_WVGA
-	bool "MDDI Toshiba WVGA panel"
-	select FB_MSM_MDDI_TOSHIBA_COMMON
-	---help---
-	  Support for MDDI Toshiba (800x480) WVGA panel
-
-config FB_MSM_MDDI_SHARP_QVGA_128x128
-	bool "MDDI Sharp QVGA Dual Panel"
-	select FB_MSM_MDDI
-	---help---
-	  Support for MDDI Sharp QVGA (240x320) and 128x128 dual panel
-
-config FB_MSM_MIPI_TOSHIBA_VIDEO_WVGA_PT_PANEL
-	bool "MIPI Toshiba WVGA PT Panel"
-	select FB_MSM_MIPI_TOSHIBA_VIDEO_WVGA_PT
-
-config FB_MSM_MIPI_NOVATEK_VIDEO_QHD_PT_PANEL
-	bool "MIPI NOVATEK VIDEO QHD PT Panel"
-	select FB_MSM_MIPI_NOVATEK_VIDEO_QHD_PT
-
-config FB_MSM_MIPI_NOVATEK_CMD_QHD_PT_PANEL
-	bool "MIPI NOVATEK CMD QHD PT Panel"
-	select FB_MSM_MIPI_NOVATEK_CMD_QHD_PT
-
-config FB_MSM_EBI2_TMD_QVGA_EPSON_QCIF
-	bool "EBI2 TMD QVGA Epson QCIF Dual Panel"
-	select FB_MSM_EBI2
-	---help---
-	  Support for EBI2 TMD QVGA (240x320) and Epson QCIF (176x220) panel
-
-config FB_MSM_PANEL_NONE
-	bool "NONE"
-	---help---
-	  This will disable LCD panel
-endchoice
-
+	  Support for TMD_LT033MDV1000 panel connected
+	  to the MDDI Novatek micro controller
 choice
 	prompt "Secondary LCD Panel"
 	depends on  FB_MSM_MDP31
@@ -2634,6 +2591,10 @@ config FB_MSM_LCDC_DSUB
 
 config FB_MSM_EXT_INTERFACE_COMMON
 	bool
+	default n
+
+config FB_MDDI_DISABLE_REVERSE
+	bool "DISABLE REVERSE"
 	default n
 
 config FB_MSM_HDMI_COMMON
@@ -2674,8 +2635,19 @@ config FB_MSM_HDMI_MSM_PANEL
 	---help---
 	  Support for 480p/720p/1080i/1080p output through MSM HDMI
 
+config FB_MSM_HDMI_MSM_FUJI_PANEL
+	depends on FB_MSM_MDP40 && !FB_MSM_HDMI_MSM_PANEL
+	bool "MSM HDMI 1080p Panel for Fuji"
+	select FB_MSM_DTV
+	select FB_MSM_EXT_INTERFACE_COMMON
+	select FB_MSM_HDMI_COMMON
+	select FB_MSM_HDMI_3D
+	default n
+	---help---
+	  Support for 480p/720p/1080p output through MSM HDMI for Fuji
+
 config FB_MSM_HDMI_MSM_PANEL_DVI_SUPPORT
-	depends on FB_MSM_HDMI_MSM_PANEL
+	depends on FB_MSM_HDMI_MSM_PANEL || FB_MSM_HDMI_MSM_FUJI_PANEL
 	bool "Use DVI mode"
 	default n
 	---help---
@@ -2690,7 +2662,7 @@ config FB_MSM_HDMI_MSM_PANEL_CEC_SUPPORT
 	  Choose to enable CEC
 
 config FB_MSM_HDMI_MSM_PANEL_HDCP_SUPPORT
-	depends on FB_MSM_HDMI_MSM_PANEL
+	depends on FB_MSM_HDMI_MSM_PANEL || FB_MSM_HDMI_MSM_FUJI_PANEL
 	bool "Use HDCP mode"
 	default y
 	---help---
@@ -2698,6 +2670,34 @@ config FB_MSM_HDMI_MSM_PANEL_HDCP_SUPPORT
 	  Choose to enable HDCP
 	  .
 	  .
+
+config FB_MSM_HDMI_MSM_PANEL_CEC_SUPPORT
+	depends on FB_MSM_HDMI_MSM_FUJI_PANEL
+	bool "Use CEC mode"
+	default y
+	---help---
+	  Support for CEC for MSM HDMI 1080p Panel for Fuji
+	  Choose to enable CEC
+
+config FB_MSM_TVOUT_NTSC
+	bool
+	select FB_MSM_TVOUT
+	default n
+
+config FB_MSM_TVOUT_PAL
+	bool
+	select FB_MSM_TVOUT
+	default n
+
+config FB_MSM_HDMI_SII9024A_PANEL
+	depends on FB_MSM_MDP40
+	bool "LCDC HDMI SiI9024A 720p Panel"
+	select FB_MSM_DTV
+	select UIO
+	select UIO_PDRV_GENIRQ
+	default n
+	---help---
+	  Support for LCDC 720p HDMI panel attached to SiI9024A
 
 choice
 	depends on  (FB_MSM_MDP22 || FB_MSM_MDP31 || FB_MSM_MDP40)

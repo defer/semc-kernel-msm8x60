@@ -102,6 +102,9 @@ struct mmc_card {
 #define MMC_QUIRK_LENIENT_FN0	(1<<0)		/* allow SDIO FN0 writes outside of the VS CCCR range */
 #define MMC_QUIRK_BLKSZ_FOR_BYTE_MODE (1<<1)	/* use func->cur_blksize */
 						/* for byte mode */
+#ifdef CONFIG_MACH_SEMC_ZEUS
+#define MMC_STATE_REMOVED	(1<<16)		/* card is removed/ejected */
+#endif /* CONFIG_MACH_SEMC_ZEUS */
 
 	u32			raw_cid[4];	/* raw card CID */
 	u32			raw_csd[4];	/* raw card CSD */
@@ -131,11 +134,17 @@ struct mmc_card {
 #define mmc_card_readonly(c)	((c)->state & MMC_STATE_READONLY)
 #define mmc_card_highspeed(c)	((c)->state & MMC_STATE_HIGHSPEED)
 #define mmc_card_blockaddr(c)	((c)->state & MMC_STATE_BLOCKADDR)
+#ifdef CONFIG_MACH_SEMC_ZEUS
+#define mmc_card_removed(c)	((c)->state & MMC_STATE_REMOVED)
+#endif /* CONFIG_MACH_SEMC_ZEUS */
 
 #define mmc_card_set_present(c)	((c)->state |= MMC_STATE_PRESENT)
 #define mmc_card_set_readonly(c) ((c)->state |= MMC_STATE_READONLY)
 #define mmc_card_set_highspeed(c) ((c)->state |= MMC_STATE_HIGHSPEED)
 #define mmc_card_set_blockaddr(c) ((c)->state |= MMC_STATE_BLOCKADDR)
+#ifdef CONFIG_MACH_SEMC_ZEUS
+#define mmc_card_set_removed(c) ((c)->state |= MMC_STATE_REMOVED)
+#endif /* CONFIG_MACH_SEMC_ZEUS */
 
 static inline int mmc_card_lenient_fn0(const struct mmc_card *c)
 {

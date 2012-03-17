@@ -991,7 +991,8 @@ static void __exit diagchar_exit(void)
 	diagmem_exit(driver, POOL_TYPE_ALL);
 	diagfwd_exit();
 #ifdef CONFIG_DIAG_SDIO_PIPE
-	if (machine_is_msm8x60_charm_surf() || machine_is_msm8x60_charm_ffa())
+	if (machine_is_msm8x60_charm_surf() ||
+		machine_is_msm8x60_charm_ffa())
 		diagfwd_sdio_exit();
 #endif
 	diagchar_cleanup();

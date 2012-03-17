@@ -1,4 +1,5 @@
 /* Copyright (c) 2011, Code Aurora Forum. All rights reserved.
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -97,6 +98,9 @@ struct msm_gemini_ctrl_cmd {
 #define MSM_GEMINI_EVT_RESET 0
 #define MSM_GEMINI_EVT_FRAMEDONE	1
 #define MSM_GEMINI_EVT_ERR 2
+/* extension begin */
+#define MSM_GEMINI_EVT_BUFFER_OVER 255
+/* extension end */
 
 struct msm_gemini_buf {
 	uint32_t type;

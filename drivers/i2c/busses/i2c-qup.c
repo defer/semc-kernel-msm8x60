@@ -1240,10 +1240,10 @@ qup_i2c_remove(struct platform_device *pdev)
 	return 0;
 }
 
-#ifdef CONFIG_PM
-static int qup_i2c_suspend(struct device *device)
+#ifdef CONFIG_SUSPEND
+static int qup_i2c_pm_suspend(struct device *dd)
 {
-	struct platform_device *pdev = to_platform_device(device);
+	struct platform_device *pdev = to_platform_device(dd);
 	struct qup_i2c_dev *dev = platform_get_drvdata(pdev);
 
 	/* Grab mutex to ensure ongoing transaction is over */
@@ -1256,45 +1256,21 @@ static int qup_i2c_suspend(struct device *device)
 	return 0;
 }
 
-static int qup_i2c_resume(struct device *device)
+static int qup_i2c_pm_resume(struct device *dd)
 {
-	struct platform_device *pdev = to_platform_device(device);
+	struct platform_device *pdev = to_platform_device(dd);
 	struct qup_i2c_dev *dev = platform_get_drvdata(pdev);
 	dev->suspended = 0;
 	return 0;
 }
-#endif /* CONFIG_PM */
-
-#ifdef CONFIG_PM_RUNTIME
-static int i2c_qup_runtime_idle(struct device *dev)
-{
-	dev_dbg(dev, "pm_runtime: idle...\n");
-	return 0;
-}
-
-static int i2c_qup_runtime_suspend(struct device *dev)
-{
-	dev_dbg(dev, "pm_runtime: suspending...\n");
-	return 0;
-}
-
-static int i2c_qup_runtime_resume(struct device *dev)
-{
-	dev_dbg(dev, "pm_runtime: resuming...\n");
-	return 0;
-}
-#endif
+#else
+#define qup_i2c_pm_suspend NULL
+#define qup_i2c_pm_resume NULL
+#endif /* CONFIG_SUSPEND */
 
 static const struct dev_pm_ops i2c_qup_dev_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(
-		qup_i2c_suspend,
-		qup_i2c_resume
-	)
-	SET_RUNTIME_PM_OPS(
-		i2c_qup_runtime_suspend,
-		i2c_qup_runtime_resume,
-		i2c_qup_runtime_idle
-	)
+	.suspend = qup_i2c_pm_suspend,
+	.resume = qup_i2c_pm_resume,
 };
 
 static struct platform_driver qup_i2c_driver = {

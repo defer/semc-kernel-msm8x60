@@ -84,6 +84,7 @@ module_param(print_all_stacks, int,  S_IRUGO | S_IWUSR);
 
 static void pet_watchdog_work(struct work_struct *work);
 static DECLARE_DELAYED_WORK(dogwork_struct, pet_watchdog_work);
+static struct workqueue_struct *wdog_wq;
 
 static int msm_watchdog_suspend(void)
 {
@@ -223,8 +224,14 @@ static void pet_watchdog_work(struct work_struct *work)
 	pet_watchdog();
 
 	if (enable)
-		schedule_delayed_work(&dogwork_struct, delay_time);
+		queue_delayed_work(wdog_wq, &dogwork_struct, delay_time);
 }
+
+void touch_nmi_watchdog(void)
+{
+	pet_watchdog();
+}
+EXPORT_SYMBOL(touch_nmi_watchdog);
 
 static void __exit exit_watchdog(void)
 {
@@ -236,6 +243,7 @@ static void __exit exit_watchdog(void)
 		dsb();
 		secure_writel(0, MSM_TCSR_BASE + TCSR_WDT_CFG);
 		free_irq(WDT0_ACCSCSSNBARK_INT, 0);
+		destroy_workqueue(wdog_wq);
 		enable = 0;
 	}
 	printk(KERN_INFO "MSM Watchdog Exit - Deactivated\n");
@@ -291,6 +299,10 @@ static int __init init_watchdog(void)
 		return 0;
 	}
 
+	wdog_wq = create_rt_workqueue("msm_watchdog");
+	if (!wdog_wq)
+		return -ENOMEM;
+
 	/* Must request irq before sending scm command */
 	ret = request_irq(WDT0_ACCSCSSNBARK_INT, wdog_bark_handler, 0,
 			  "apps_wdog_bark", NULL);
@@ -334,7 +346,7 @@ static int __init init_watchdog(void)
 		return ret;
 	}
 
-	schedule_delayed_work(&dogwork_struct, delay_time);
+	queue_delayed_work(wdog_wq, &dogwork_struct, delay_time);
 
 	atomic_notifier_chain_register(&panic_notifier_list,
 				       &panic_blk);

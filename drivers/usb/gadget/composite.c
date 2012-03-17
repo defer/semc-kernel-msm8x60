@@ -2,6 +2,7 @@
  * composite.c - infrastructure for Composite USB Gadgets
  *
  * Copyright (C) 2006-2008 David Brownell
+ * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -110,13 +111,20 @@ void usb_function_set_enabled(struct usb_function *f, int enabled)
 }
 
 
-void usb_composite_force_reset(struct usb_composite_dev *cdev)
+void usb_composite_force_reset(struct usb_composite_dev *cdev,
+		int enable_mute_switch)
 {
 	unsigned long			flags;
 
 	spin_lock_irqsave(&cdev->lock, flags);
 	/* force reenumeration */
 	if (cdev && cdev->gadget && cdev->gadget->speed != USB_SPEED_UNKNOWN) {
+		/* avoid sending a disconnect switch event
+		 * until after we disconnect
+		 */
+		cdev->mute_switch = !!enable_mute_switch;
+
+		cdev->switching_composition = 1;
 		spin_unlock_irqrestore(&cdev->lock, flags);
 
 		usb_gadget_disconnect(cdev->gadget);
@@ -563,6 +571,9 @@ static int set_config(struct usb_composite_dev *cdev,
 done:
 	usb_gadget_vbus_draw(gadget, power);
 
+	cdev->switching_composition = 0;
+	cdev->mute_switch = 0;
+
 	schedule_work(&cdev->switch_work);
 	return result;
 }
@@ -824,7 +835,10 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 	spin_lock_irqsave(&cdev->lock, flags);
 	if (!cdev->connected) {
 		cdev->connected = 1;
-		schedule_work(&cdev->switch_work);
+		if (cdev->switching_composition) {
+			cdev->switching_composition = 0;
+			schedule_work(&cdev->switch_work);
+		}
 	}
 	spin_unlock_irqrestore(&cdev->lock, flags);
 
@@ -1058,9 +1072,23 @@ static void composite_disconnect(struct usb_gadget *gadget)
 	if (cdev->config)
 		reset_config(cdev);
 
-	cdev->connected = 0;
+	if (!cdev->mute_switch)
+		cdev->connected = 0;
+
 	schedule_work(&cdev->switch_work);
 	spin_unlock_irqrestore(&cdev->lock, flags);
+}
+
+static void composite_offline(struct usb_gadget *gadget)
+{
+	struct usb_composite_dev	*cdev = get_gadget_data(gadget);
+	unsigned long			flags;
+
+	spin_lock_irqsave(&cdev->lock, flags);
+	cdev->mute_switch = 0;
+	spin_unlock_irqrestore(&cdev->lock, flags);
+
+	composite_disconnect(gadget);
 }
 
 /*-------------------------------------------------------------------------*/
@@ -1125,6 +1153,7 @@ composite_unbind(struct usb_gadget *gadget)
 		kfree(cdev->req->buf);
 		usb_ep_free_request(gadget->ep0, cdev->req);
 	}
+
 	switch_dev_unregister(&cdev->sw_connected);
 	switch_dev_unregister(&cdev->sw_config);
 	kfree(cdev);
@@ -1341,6 +1370,7 @@ static struct usb_gadget_driver composite_driver = {
 
 	.setup		= composite_setup,
 	.disconnect	= composite_disconnect,
+	.offline	= composite_offline,
 
 	.suspend	= composite_suspend,
 	.resume		= composite_resume,

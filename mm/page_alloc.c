@@ -883,8 +883,8 @@ static int move_freepages(struct zone *zone,
 static int move_freepages_block(struct zone *zone, struct page *page,
 				int migratetype)
 {
-	unsigned long start_pfn, end_pfn;
-	struct page *start_page, *end_page;
+	unsigned long start_pfn, end_pfn, curr_pfn;
+	struct page *start_page, *end_page, *curr_page;
 
 	start_pfn = page_to_pfn(page);
 	start_pfn = start_pfn & ~(pageblock_nr_pages-1);
@@ -897,6 +897,13 @@ static int move_freepages_block(struct zone *zone, struct page *page,
 		start_page = page;
 	if (end_pfn >= zone->zone_start_pfn + zone->spanned_pages)
 		return 0;
+
+	/* Watch for unexpected holes punched in the memmap */
+	for (curr_page = start_page, curr_pfn = start_pfn;
+	     curr_page <= end_page; curr_page++, curr_pfn++) {
+		if (!memmap_valid_within(curr_pfn, curr_page, zone))
+			return 0;
+	}
 
 	return move_freepages(zone, start_page, end_page, migratetype);
 }

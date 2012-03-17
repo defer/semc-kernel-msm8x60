@@ -1264,6 +1264,9 @@ static const struct reg_init {
 	/* Enable UMDX_P clock. Known to causes issues, so never turn off. */
 	{GLBL_CLK_ENA_2_SC_REG, BIT(2), BIT(2)},
 
+	/* Enable ADM clock */
+	{GLBL_CLK_ENA_SC_REG, B(5), B(5)},
+
 	{EMDH_NS_REG, BM(18, 17) , BVAL(18, 17, 0x3)}, /* RX div = div-4. */
 	{PMDH_NS_REG, BM(18, 17), BVAL(18, 17, 0x3)}, /* RX div = div-4. */
 	/* MI2S_CODEC_RX_S src = MI2S_CODEC_RX_M. */

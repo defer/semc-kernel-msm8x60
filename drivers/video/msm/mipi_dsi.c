@@ -202,15 +202,6 @@ static void mipi_dsi_calibration(void)
 	}
 }
 
-struct dsiphy_pll_divider_config {
-	u32 clk_rate;
-	u32 fb_divider;
-	u32 ref_divider_ratio;
-	u32 bit_clk_divider;	/* oCLK1 */
-	u32 byte_clk_divider;	/* oCLK2 */
-	u32 dsi_clk_divider;	/* oCLK3 */
-};
-
 struct dsi_clk_mnd_table {
 	uint8 lanes;
 	uint8 bpp;
@@ -224,7 +215,7 @@ struct dsi_clk_mnd_table {
 };
 
 #define PREF_DIV_RATIO 27
-static struct dsiphy_pll_divider_config pll_divider_config;
+struct dsiphy_pll_divider_config pll_divider_config;
 
 static const struct dsi_clk_mnd_table mnd_table[] = {
 	{ 1, 2, 8, 1, 1, 0, 1,  2, 0},
@@ -641,6 +632,7 @@ static int mipi_dsi_on(struct platform_device *pdev)
 
 	mipi_dsi_op_mode_config(mipi->mode);
 
+
 	if (mfd->panel_info.type == MIPI_CMD_PANEL) {
 		if (pinfo->lcd.vsync_enable) {
 			if (pinfo->lcd.hw_vsync_mode && vsync_gpio > 0) {
@@ -775,6 +767,7 @@ static int mipi_dsi_probe(struct platform_device *pdev)
 
 	/*
 	 * get/set panel specific fb info
+	 * this panel_info is default and temporal
 	 */
 	mfd->panel_info = pdata->panel_info;
 	pinfo = &mfd->panel_info;

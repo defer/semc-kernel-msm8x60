@@ -5,6 +5,7 @@
  * Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
  * Author: Mike Lockwood <lockwood@android.com>
  *         Brian Swetland <swetland@google.com>
+ * Copyright (C) 2010-2011 Sony Ericsson Mobile Communications AB.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -183,10 +184,26 @@ struct usb_info {
 	/* max power requested by selected configuration */
 	unsigned b_max_pow;
 	unsigned chg_current;
+	struct workqueue_struct *wq;
 	struct delayed_work chg_det;
 	struct delayed_work chg_stop;
 	struct msm_hsusb_gadget_platform_data *pdata;
 	struct work_struct phy_status_check;
+
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+	/*
+	* Since some 3rd-party wall chargers don't follow the specification they
+	* can look like HOST PC. To clarify what is actually plugged in we will
+	* monitor the connection status.
+	* As soon as the link is established we consider that it's real HOST PC.
+	* If link is not established within reasonable time we consider that
+	* it's WALL charger, but we still have a chance to change it to HOST PC
+	* if the connection is established in the end of ends
+	*/
+#define CHG_TYPE_CHK_POLL_DELAY msecs_to_jiffies(5000)
+	struct delayed_work chg_type_work;
+	struct work_struct chg_type_stop_delayed_work;
+#endif /* CONFIG_SUPPORT_ALIEN_USB_CHARGER */
 
 	struct work_struct work;
 	unsigned phy_status;
@@ -284,10 +301,35 @@ static inline enum chg_type usb_get_chg_type(struct usb_info *ui)
 	if ((readl(USB_PORTSC) & PORTSC_LS) == PORTSC_LS)
 		return USB_CHG_TYPE__WALLCHARGER;
 	else
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+	{
+		struct msm_otg *otg = to_msm_otg(ui->xceiv);
+
+		if (atomic_read(&otg->chg_type) == USB_CHG_TYPE__INVALID) {
+			if (atomic_read(&otg->chg_type) ==
+			    USB_STATE_CONFIGURED) {
+				return USB_CHG_TYPE__SDP;
+			} else {
+				/*
+				 * Looks like HOST PC: charger type will be set
+				 * when link is established.
+				 */
+				pr_info("\n*********** Charger Type: might be"
+					" HOST PC\n\n");
+				queue_delayed_work(ui->wq, &ui->chg_type_work,
+						   CHG_TYPE_CHK_POLL_DELAY);
+				return USB_CHG_TYPE__MIGHT_BE_HOST_PC;
+			}
+		} else {
+			return atomic_read(&otg->chg_type);
+		}
+	}
+#else
 		return USB_CHG_TYPE__SDP;
+#endif /* CONFIG_SUPPORT_ALIEN_USB_CHARGER */
 }
 
-#define USB_WALLCHARGER_CHG_CURRENT 1800
+#define USB_WALLCHARGER_CHG_CURRENT 1500
 static int usb_get_max_power(struct usb_info *ui)
 {
 	struct msm_otg *otg = to_msm_otg(ui->xceiv);
@@ -312,6 +354,12 @@ static int usb_get_max_power(struct usb_info *ui)
 
 	if (temp == USB_CHG_TYPE__WALLCHARGER)
 		return USB_WALLCHARGER_CHG_CURRENT;
+
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+	if (temp == USB_CHG_TYPE__ALIENCHARGER)
+		return min(CONFIG_ALIEN_USB_CHARGER_CURRENT_MA,
+			   USB_WALLCHARGER_CHG_CURRENT);
+#endif
 
 	if (suspended || !configured)
 		return 0;
@@ -420,22 +468,89 @@ static void usb_chg_detect(struct work_struct *w)
 	spin_unlock_irqrestore(&ui->lock, flags);
 
 	atomic_set(&otg->chg_type, temp);
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+	if (temp == USB_CHG_TYPE__MIGHT_BE_HOST_PC)
+		return;
+#endif /* CONFIG_SUPPORT_ALIEN_USB_CHARGER */
+
 	maxpower = usb_get_max_power(ui);
 	if (maxpower > 0)
 		otg_set_power(ui->xceiv, maxpower);
 
-	/* USB driver prevents idle and suspend power collapse(pc)
-	 * while USB cable is connected. But when dedicated charger is
-	 * connected, driver can vote for idle and suspend pc.
-	 * OTG driver handles idle pc as part of above otg_set_power call
-	 * when wallcharger is attached. To allow suspend pc, release the
-	 * wakelock which will be re-acquired for any sub-sequent usb interrupts
-	 * */
-	if (temp == USB_CHG_TYPE__WALLCHARGER) {
-		pm_runtime_put_sync(&ui->pdev->dev);
-		wake_unlock(&ui->wlock);
+}
+
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+static void usb_stop_delayed_chg_type_work_start_immediate_work(
+	struct work_struct *w)
+{
+	struct usb_info *ui =
+		container_of(w, struct usb_info, chg_type_stop_delayed_work);
+
+	if (delayed_work_pending(&ui->chg_type_work)) {
+		cancel_delayed_work_sync(&ui->chg_type_work);
+		queue_delayed_work(ui->wq, &ui->chg_type_work, 0);
 	}
 }
+
+static void usb_check_chg_type_work(struct work_struct *w)
+{
+	struct usb_info *ui =
+		container_of(w, struct usb_info, chg_type_work.work);
+	struct msm_otg *otg = to_msm_otg(ui->xceiv);
+	unsigned long flags;
+	enum chg_type temp;
+	int maxpower;
+
+	temp = atomic_read(&otg->chg_type);
+
+	if (temp == USB_CHG_TYPE__ALIENCHARGER) {
+		/*
+		* It looks like charger has been defined as WALL by mistake,
+		* but now usb link is established and we gonna change the type
+		* to HOST_PC
+		*/
+		pr_info("\n*********** Charger Type: disconnecting WALL"
+			" charger\n\n");
+		atomic_set(&otg->chg_type, USB_CHG_TYPE__INVALID);
+		otg_set_power(ui->xceiv, 0);
+		temp = USB_CHG_TYPE__SDP;
+		atomic_set(&otg->chg_type, temp);
+		pr_info("\n*********** Charger Type: HOST PC\n\n");
+
+	} else if (temp == USB_CHG_TYPE__SDP) {
+		pr_info("\n*********** Charger Type: HOST PC\n\n");
+
+	} else {
+		/*
+		* all the reasonable time expired: seems it's WALL charger.
+		*/
+		pr_info("\n*********** Charger Type looks like HOST PC"
+			" but is actually WALL CHARGER\n\n");
+
+		temp = USB_CHG_TYPE__ALIENCHARGER;
+		atomic_set(&otg->chg_type, temp);
+	}
+
+	maxpower = usb_get_max_power(ui);
+	if (maxpower > 0)
+		otg_set_power(ui->xceiv, maxpower);
+
+	if (atomic_read(&ui->configured) &&
+		   ui->gadget.speed != USB_SPEED_UNKNOWN) {
+		wake_lock(&ui->wlock);
+
+		spin_lock_irqsave(&ui->lock, flags);
+		ui->usb_state = USB_STATE_CONFIGURED;
+		ui->flags = USB_FLAG_CONFIGURED;
+		spin_unlock_irqrestore(&ui->lock, flags);
+
+		ui->driver->resume(&ui->gadget);
+		queue_work(ui->wq, &ui->work);
+	} else {
+		msm_hsusb_set_state(USB_STATE_DEFAULT);
+	}
+}
+#endif /* CONFIG_SUPPORT_ALIEN_USB_CHARGER */
 
 static int usb_ep_get_stall(struct msm_endpoint *ept)
 {
@@ -683,7 +798,7 @@ int usb_ept_queue_xfer(struct msm_endpoint *ept, struct usb_request *_req)
 
 		wake_lock(&ui->wlock);
 		otg_set_suspend(ui->xceiv, 0);
-		schedule_delayed_work(&ui->rw_work, REMOTE_WAKEUP_DELAY);
+		queue_delayed_work(ui->wq, &ui->rw_work, REMOTE_WAKEUP_DELAY);
 	}
 
 	req->busy = 1;
@@ -1037,7 +1152,9 @@ static void handle_setup(struct usb_info *ui)
 				}
 				goto stall;
 			case USB_DEVICE_REMOTE_WAKEUP:
+#ifdef CONFIG_USB_REMOTE_WAKEUP
 				atomic_set(&ui->remote_wakeup, 1);
+#endif
 				goto ack;
 #ifdef CONFIG_USB_OTG
 			case USB_DEVICE_B_HNP_ENABLE:
@@ -1216,7 +1333,43 @@ static irqreturn_t usb_interrupt(int irq, void *data)
 		return IRQ_HANDLED;
 
 	if (n & STS_PCI) {
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+		struct msm_otg *otg = to_msm_otg(ui->xceiv);
+#endif
 		msm_hsusb_set_speed(ui);
+
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+		if (atomic_read(&otg->chg_type) == USB_CHG_TYPE__INVALID) {
+			atomic_set(&otg->chg_type, USB_CHG_TYPE__SDP);
+			queue_delayed_work(ui->wq, &ui->chg_type_work, 0);
+		} else if (atomic_read(&otg->chg_type) ==
+			   USB_CHG_TYPE__MIGHT_BE_HOST_PC) {
+			/* Link is established so this _is_ PC */
+			atomic_set(&otg->chg_type, USB_CHG_TYPE__SDP);
+
+			/* If delayed work has been initiated by function
+			 * usb_get_chg_type() because of might be host
+			 * PC and not yet expired, then stop any pending work
+			 * and do work immediately.
+			 */
+			queue_work(ui->wq, &ui->chg_type_stop_delayed_work);
+		} else if (atomic_read(&otg->chg_type) ==
+			   USB_CHG_TYPE__ALIENCHARGER) {
+			queue_delayed_work(ui->wq, &ui->chg_type_work, 0);
+		} else if (atomic_read(&ui->configured)) {
+			wake_lock(&ui->wlock);
+
+			spin_lock_irqsave(&ui->lock, flags);
+			ui->usb_state = USB_STATE_CONFIGURED;
+			ui->flags = USB_FLAG_CONFIGURED;
+			spin_unlock_irqrestore(&ui->lock, flags);
+
+			ui->driver->resume(&ui->gadget);
+			queue_work(ui->wq, &ui->work);
+		} else {
+			msm_hsusb_set_state(USB_STATE_DEFAULT);
+		}
+#else
 		if (atomic_read(&ui->configured)) {
 			wake_lock(&ui->wlock);
 
@@ -1226,11 +1379,11 @@ static irqreturn_t usb_interrupt(int irq, void *data)
 			spin_unlock_irqrestore(&ui->lock, flags);
 
 			ui->driver->resume(&ui->gadget);
-			schedule_work(&ui->work);
+			queue_work(ui->wq, &ui->work);
 		} else {
 			msm_hsusb_set_state(USB_STATE_DEFAULT);
 		}
-
+#endif /* CONFIG_SUPPORT_ALIEN_USB_CHARGER */
 #ifdef CONFIG_USB_OTG
 		/* notify otg to clear A_BIDL_ADIS timer */
 		if (ui->gadget.is_a_peripheral)
@@ -1239,7 +1392,7 @@ static irqreturn_t usb_interrupt(int irq, void *data)
 	}
 
 	if (n & STS_URI) {
-		dev_dbg(&ui->pdev->dev, "reset\n");
+		dev_info(&ui->pdev->dev, "reset\n");
 		spin_lock_irqsave(&ui->lock, flags);
 		ui->gadget.speed = USB_SPEED_UNKNOWN;
 		spin_unlock_irqrestore(&ui->lock, flags);
@@ -1256,7 +1409,7 @@ static irqreturn_t usb_interrupt(int irq, void *data)
 		msm_hsusb_set_state(USB_STATE_DEFAULT);
 		atomic_set(&ui->remote_wakeup, 0);
 		if (!ui->gadget.is_a_peripheral)
-			schedule_delayed_work(&ui->chg_stop, 0);
+			queue_delayed_work(ui->wq, &ui->chg_stop, 0);
 
 		writel(readl(USB_ENDPTSETUPSTAT), USB_ENDPTSETUPSTAT);
 		writel(readl(USB_ENDPTCOMPLETE), USB_ENDPTCOMPLETE);
@@ -1291,7 +1444,7 @@ static irqreturn_t usb_interrupt(int irq, void *data)
 	}
 
 	if (n & STS_SLI) {
-		dev_dbg(&ui->pdev->dev, "suspend\n");
+		dev_info(&ui->pdev->dev, "suspend\n");
 
 		spin_lock_irqsave(&ui->lock, flags);
 		ui->usb_state = USB_STATE_SUSPENDED;
@@ -1299,7 +1452,7 @@ static irqreturn_t usb_interrupt(int irq, void *data)
 		spin_unlock_irqrestore(&ui->lock, flags);
 
 		ui->driver->suspend(&ui->gadget);
-		schedule_work(&ui->work);
+		queue_work(ui->wq, &ui->work);
 #ifdef CONFIG_USB_OTG
 		/* notify otg for
 		 * 1. kicking A_BIDL_ADIS timer in case of A-peripheral
@@ -1352,6 +1505,11 @@ static void usb_prepare(struct usb_info *ui)
 	INIT_DELAYED_WORK(&ui->rw_work, usb_do_remote_wakeup);
 	if (ui->pdata && ui->pdata->is_phy_status_timer_on)
 		INIT_WORK(&ui->phy_status_check, usb_phy_stuck_recover);
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+	INIT_DELAYED_WORK(&ui->chg_type_work, usb_check_chg_type_work);
+	INIT_WORK(&ui->chg_type_stop_delayed_work,
+		  usb_stop_delayed_chg_type_work_start_immediate_work);
+#endif /* CONFIG_SUPPORT_ALIEN_USB_CHARGER */
 }
 
 static void usb_reset(struct usb_info *ui)
@@ -1406,7 +1564,7 @@ static void usb_start(struct usb_info *ui)
 
 	spin_lock_irqsave(&ui->lock, flags);
 	ui->flags |= USB_FLAG_START;
-	schedule_work(&ui->work);
+	queue_work(ui->wq, &ui->work);
 	spin_unlock_irqrestore(&ui->lock, flags);
 }
 
@@ -1469,7 +1627,7 @@ static void usb_do_work(struct work_struct *w)
 
 				pm_runtime_get_noresume(&ui->pdev->dev);
 				pm_runtime_resume(&ui->pdev->dev);
-				dev_dbg(&ui->pdev->dev,
+				dev_info(&ui->pdev->dev,
 					"msm72k_udc: IDLE -> ONLINE\n");
 				usb_reset(ui);
 				ret = request_irq(otg->irq, usb_interrupt,
@@ -1494,9 +1652,9 @@ static void usb_do_work(struct work_struct *w)
 				msm72k_pullup_internal(&ui->gadget, 1);
 
 				if (!ui->gadget.is_a_peripheral)
-					schedule_delayed_work(
-							&ui->chg_det,
-							USB_CHG_DET_DELAY);
+					queue_delayed_work(ui->wq,
+							   &ui->chg_det,
+							   USB_CHG_DET_DELAY);
 
 			}
 			break;
@@ -1510,13 +1668,16 @@ static void usb_do_work(struct work_struct *w)
 			 * the signal to go offline, we must honor it
 			 */
 			if (flags & USB_FLAG_VBUS_OFFLINE) {
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+				cancel_delayed_work_sync(&ui->chg_type_work);
+#endif
 
 				ui->chg_current = 0;
 				/* wait incase chg_detect is running */
 				if (!ui->gadget.is_a_peripheral)
 					cancel_delayed_work_sync(&ui->chg_det);
 
-				dev_dbg(&ui->pdev->dev,
+				dev_info(&ui->pdev->dev,
 					"msm72k_udc: ONLINE -> OFFLINE\n");
 
 				atomic_set(&ui->running, 0);
@@ -1526,7 +1687,12 @@ static void usb_do_work(struct work_struct *w)
 				if (ui->driver) {
 					dev_dbg(&ui->pdev->dev,
 						"usb: notify offline\n");
-					ui->driver->disconnect(&ui->gadget);
+					if (ui->driver->offline)
+						ui->driver->offline(
+							&ui->gadget);
+					else
+						ui->driver->disconnect(
+							&ui->gadget);
 				}
 				/* cancel pending ep0 transactions */
 				flush_endpoint(&ui->ep0out);
@@ -1582,7 +1748,18 @@ static void usb_do_work(struct work_struct *w)
 				break;
 			}
 			if (flags & USB_FLAG_CONFIGURED) {
-				int maxpower = usb_get_max_power(ui);
+				int maxpower;
+
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+				/* Do not handle this if charger detection work
+				 * is pending. The correct type has not yet been
+				 * identified.
+				 */
+				if (delayed_work_pending(&ui->chg_type_work))
+					break;
+#endif
+
+				maxpower = usb_get_max_power(ui);
 
 				/* We may come here even when no configuration
 				 * is selected. Send online/offline event
@@ -1599,12 +1776,12 @@ static void usb_do_work(struct work_struct *w)
 				break;
 			}
 			if (flags & USB_FLAG_RESET) {
-				dev_dbg(&ui->pdev->dev,
+				dev_info(&ui->pdev->dev,
 					"msm72k_udc: ONLINE -> RESET\n");
 				msm72k_pullup_internal(&ui->gadget, 0);
 				usb_reset(ui);
 				msm72k_pullup_internal(&ui->gadget, 1);
-				dev_dbg(&ui->pdev->dev,
+				dev_info(&ui->pdev->dev,
 					"msm72k_udc: RESET -> ONLINE\n");
 				break;
 			}
@@ -1618,7 +1795,7 @@ static void usb_do_work(struct work_struct *w)
 
 				pm_runtime_get_noresume(&ui->pdev->dev);
 				pm_runtime_resume(&ui->pdev->dev);
-				dev_dbg(&ui->pdev->dev,
+				dev_info(&ui->pdev->dev,
 					"msm72k_udc: OFFLINE -> ONLINE\n");
 
 				usb_reset(ui);
@@ -1644,9 +1821,9 @@ static void usb_do_work(struct work_struct *w)
 				msm72k_pullup_internal(&ui->gadget, 1);
 
 				if (!ui->gadget.is_a_peripheral)
-					schedule_delayed_work(
-							&ui->chg_det,
-							USB_CHG_DET_DELAY);
+					queue_delayed_work(ui->wq,
+							   &ui->chg_det,
+							   USB_CHG_DET_DELAY);
 			}
 			break;
 		}
@@ -1681,7 +1858,7 @@ void msm_hsusb_set_vbus_state(int online)
 		ui->flags |= USB_FLAG_VBUS_OFFLINE;
 	}
 	if (in_interrupt()) {
-		schedule_work(&ui->work);
+		queue_work(ui->wq, &ui->work);
 	} else {
 		spin_unlock_irqrestore(&ui->lock, flags);
 		usb_do_work(&ui->work);
@@ -1772,7 +1949,7 @@ static ssize_t debug_write_reset(struct file *file, const char __user *buf,
 
 	spin_lock_irqsave(&ui->lock, flags);
 	ui->flags |= USB_FLAG_RESET;
-	schedule_work(&ui->work);
+	queue_work(ui->wq, &ui->work);
 	spin_unlock_irqrestore(&ui->lock, flags);
 
 	return count;
@@ -2110,7 +2287,11 @@ static int msm72k_udc_vbus_session(struct usb_gadget *_gadget, int is_active)
 	struct msm_otg *otg = to_msm_otg(ui->xceiv);
 
 	if (is_active || atomic_read(&otg->chg_type)
-					 == USB_CHG_TYPE__WALLCHARGER)
+					 == USB_CHG_TYPE__WALLCHARGER
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+	    || atomic_read(&otg->chg_type) == USB_CHG_TYPE__ALIENCHARGER
+#endif
+	)
 		wake_lock(&ui->wlock);
 
 	msm_hsusb_set_vbus_state(is_active);
@@ -2214,7 +2395,7 @@ static int msm72k_udc_vbus_draw(struct usb_gadget *_gadget, unsigned mA)
 	ui->flags = USB_FLAG_CONFIGURED;
 	spin_unlock_irqrestore(&ui->lock, flags);
 
-	schedule_work(&ui->work);
+	queue_work(ui->wq, &ui->work);
 
 	return 0;
 }
@@ -2246,7 +2427,9 @@ static const struct usb_gadget_ops msm72k_ops = {
 	.vbus_session	= msm72k_udc_vbus_session,
 	.vbus_draw	= msm72k_udc_vbus_draw,
 	.pullup		= msm72k_pullup,
+#ifdef CONFIG_USB_REMOTE_WAKEUP
 	.wakeup		= msm72k_wakeup,
+#endif
 	.set_selfpowered = msm72k_set_selfpowered,
 };
 
@@ -2333,9 +2516,25 @@ static ssize_t show_usb_chg_type(struct device *dev,
 			"CARKIT",
 			"DEDICATED CHARGER",
 			"INVALID"};
+#ifdef CONFIG_SUPPORT_ALIEN_USB_CHARGER
+	enum chg_type type = atomic_read(&otg->chg_type);
 
-	count = sprintf(buf, "%s",
+	switch (type) {
+	case USB_CHG_TYPE__MIGHT_BE_HOST_PC:
+		type = USB_CHG_TYPE__INVALID;
+		break;
+	case USB_CHG_TYPE__ALIENCHARGER:
+		type = USB_CHG_TYPE__WALLCHARGER;
+		break;
+	default:
+		break;
+	}
+
+	count = snprintf(buf, PAGE_SIZE, "%s", chg_type[type]);
+#else
+	count = snprintf(buf, PAGE_SIZE, "%s",
 			chg_type[atomic_read(&otg->chg_type)]);
+#endif
 
 	return count;
 }
@@ -2427,6 +2626,10 @@ static int msm72k_probe(struct platform_device *pdev)
 	if (!ui->xceiv)
 		return usb_free(ui, -ENODEV);
 
+	ui->wq = create_singlethread_workqueue("k_udc");
+	if (!ui->wq)
+		return usb_free(ui, -ENOMEM);
+
 	otg = to_msm_otg(ui->xceiv);
 	ui->addr = otg->regs;
 
@@ -2482,6 +2685,17 @@ static int msm72k_probe(struct platform_device *pdev)
 	/* Setup phy stuck timer */
 	if (ui->pdata && ui->pdata->is_phy_status_timer_on)
 		setup_timer(&phy_status_timer, usb_phy_status_check_timer, 0);
+	return 0;
+}
+
+static int msm72k_remove(struct platform_device *pdev)
+{
+	if (!the_usb_info)
+		return 0;
+
+	destroy_workqueue(the_usb_info->wq);
+	usb_free(the_usb_info, 0);
+	the_usb_info = NULL;
 	return 0;
 }
 
@@ -2638,6 +2852,7 @@ static struct dev_pm_ops msm72k_udc_dev_pm_ops = {
 
 static struct platform_driver usb_driver = {
 	.probe = msm72k_probe,
+	.remove = msm72k_remove,
 	.driver = { .name = "msm_hsusb",
 		    .pm = &msm72k_udc_dev_pm_ops, },
 };

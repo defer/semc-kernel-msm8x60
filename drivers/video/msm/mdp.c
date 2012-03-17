@@ -38,6 +38,7 @@
 #include <linux/semaphore.h>
 #include <linux/uaccess.h>
 #include <mach/clk.h>
+#include "mddihost.h"
 #include "mdp.h"
 #include "msm_fb.h"
 #ifdef CONFIG_FB_MSM_MDP40
@@ -1047,6 +1048,10 @@ void mdp_hw_version(void)
 	mdp_hw_revision >>= 28;	/* bit 31:28 */
 	mdp_hw_revision &= 0x0f;
 
+	/* Disabled MSM2.1 activation */
+	if (mdp_hw_revision >= MDP4_REVISION_V2_1)
+		mdp_hw_revision = MDP4_REVISION_V2;
+
 	MSM_FB_DEBUG("%s: mdp_hw_revision=%x\n",
 				__func__, mdp_hw_revision);
 }
@@ -1218,6 +1223,7 @@ static int mdp_probe(struct platform_device *pdev)
 	struct msm_fb_panel_data *pdata = NULL;
 	int rc;
 	resource_size_t  size ;
+	struct msm_panel_info *pinfo = NULL;
 #ifdef CONFIG_FB_MSM_MDP40
 	int intf, if_no;
 #else
@@ -1485,6 +1491,27 @@ static int mdp_probe(struct platform_device *pdev)
 #endif
 	/* set driver data */
 	platform_set_drvdata(msm_fb_dev, mfd);
+
+	/* panel detection */
+	if (pdata && pdata->panel_detect && pdata->update_panel) {
+		rc = panel_next_on(msm_fb_dev);
+		if (!rc) {
+			pinfo = pdata->panel_detect(mfd);
+			rc = panel_next_off(msm_fb_dev);
+		}
+		if (!rc && pinfo)
+			mfd->panel_info = *pinfo;
+		pdata->update_panel(pdev);
+#ifdef CONFIG_FB_MSM_MDP40
+		if (mfd->panel.type == MIPI_CMD_PANEL) {
+			mipi = &mfd->panel_info.mipi;
+			configure_mdp_core_clk_table(
+				(mipi->dsi_pclk_rate) * 3 / 2);
+		}
+#endif
+	} else {
+		MSM_FB_INFO("mdp_probe: no panel_detect function\n");
+	}
 
 	rc = platform_device_add(msm_fb_dev);
 	if (rc) {
