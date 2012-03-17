@@ -10,8 +10,8 @@
  * GNU General Public License for more details.
  *
  */
-#ifndef _KGSL_PWRCTRL_H
-#define _KGSL_PWRCTRL_H
+#ifndef __KGSL_PWRCTRL_H
+#define __KGSL_PWRCTRL_H
 
 /*****************************************************************************
 ** power flags
@@ -83,4 +83,4 @@ static inline unsigned long kgsl_get_clkrate(struct clk *clk)
 
 void kgsl_pwrctrl_set_state(struct kgsl_device *device, unsigned int state);
 void kgsl_pwrctrl_request_state(struct kgsl_device *device, unsigned int state);
-#endif /* _KGSL_PWRCTRL_H */
+#endif /* __KGSL_PWRCTRL_H */
