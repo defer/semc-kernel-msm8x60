@@ -16,7 +16,6 @@
 
 #include "kgsl.h"
 #include "kgsl_pwrscale.h"
-#include "kgsl_log.h"
 #include "kgsl_device.h"
 
 #define GPU_SWFI_LATENCY	3
@@ -29,21 +28,15 @@ void kgsl_pwrctrl_pwrlevel_change(struct kgsl_device *device,
 		new_level >= pwr->thermal_pwrlevel &&
 		new_level != pwr->active_pwrlevel) {
 		pwr->active_pwrlevel = new_level;
-		if ((pwr->power_flags & KGSL_PWRFLAGS_CLK_ON) ||
-			(device->state == KGSL_STATE_NAP))
+		if (pwr->power_flags & KGSL_PWRFLAGS_CLK_ON)
 			clk_set_rate(pwr->grp_clks[0],
 					pwr->pwrlevels[pwr->active_pwrlevel].
 					gpu_freq);
-		if (pwr->power_flags & KGSL_PWRFLAGS_AXI_ON) {
+		if (pwr->power_flags & KGSL_PWRFLAGS_AXI_ON)
 			if (pwr->pcl)
 				msm_bus_scale_client_update_request(pwr->pcl,
 					pwr->pwrlevels[pwr->active_pwrlevel].
 					bus_freq);
-			else if (pwr->ebi1_clk)
-				clk_set_rate(pwr->ebi1_clk,
-					pwr->pwrlevels[pwr->active_pwrlevel].
-					bus_freq);
-		}
 		KGSL_PWR_WARN(device, "kgsl pwr level changed to %d\n",
 					  pwr->active_pwrlevel);
 	}
@@ -433,8 +426,6 @@ int kgsl_pwrctrl_init(struct kgsl_device *device)
 					   gpu_freq) : 0;
 		pwr->pwrlevels[i].bus_freq =
 			pdata_pwr->pwrlevel[i].bus_freq;
-		pwr->pwrlevels[i].io_fraction =
-			pdata_pwr->pwrlevel[i].io_fraction;
 	}
 	/* Do not set_rate for targets in sync with AXI */
 	if (pwr->pwrlevels[0].gpu_freq > 0)

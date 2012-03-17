@@ -26,21 +26,13 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _KGSL_DEVICE_H
-#define _KGSL_DEVICE_H
+#ifndef __KGSL_DEVICE_H
+#define __KGSL_DEVICE_H
 
-#include <linux/types.h>
-#include <linux/irqreturn.h>
-#include <linux/wait.h>
-#include <linux/workqueue.h>
-#include <linux/mutex.h>
-#include <linux/msm_kgsl.h>
 #include <linux/idr.h>
 #include <linux/wakelock.h>
 #include <linux/pm_qos_params.h>
 #include <linux/earlysuspend.h>
-
-#include <asm/atomic.h>
 
 #include "kgsl.h"
 #include "kgsl_mmu.h"
@@ -82,53 +74,54 @@ struct kgsl_context;
 struct kgsl_power_stats;
 
 struct kgsl_functable {
- 	/* Mandatory functions - these functions must be implemented
- 	   by the client device.  The driver will not check for a NULL
- 	   pointer before calling the hook.
- 	 */
- 	void (*regread) (struct kgsl_device *device,
- 		unsigned int offsetwords, unsigned int *value);
- 	void (*regwrite) (struct kgsl_device *device,
- 		unsigned int offsetwords, unsigned int value);
- 	int (*idle) (struct kgsl_device *device, unsigned int timeout);
- 	unsigned int (*isidle) (struct kgsl_device *device);
- 	int (*suspend_context) (struct kgsl_device *device);
- 	int (*start) (struct kgsl_device *device, unsigned int init_ram);
- 	int (*stop) (struct kgsl_device *device);
- 	int (*getproperty) (struct kgsl_device *device,
- 		enum kgsl_property_type type, void *value,
- 		unsigned int sizebytes);
- 	int (*waittimestamp) (struct kgsl_device *device,
- 		unsigned int timestamp, unsigned int msecs);
- 	unsigned int (*readtimestamp) (struct kgsl_device *device,
- 		enum kgsl_timestamp_type type);
- 	int (*issueibcmds) (struct kgsl_device_private *dev_priv,
- 		struct kgsl_context *context, struct kgsl_ibdesc *ibdesc,
- 		unsigned int sizedwords, uint32_t *timestamp,
- 		unsigned int flags);
- 	int (*setup_pt)(struct kgsl_device *device,
- 		struct kgsl_pagetable *pagetable);
- 	int (*cleanup_pt)(struct kgsl_device *device,
- 		struct kgsl_pagetable *pagetable);
-  void (*power_stats)(struct kgsl_device *device,
- 		struct kgsl_power_stats *stats);
- 	/* Optional functions - these functions are not mandatory.  The
- 	   driver will check that the function pointer is not NULL before
- 	   calling the hook */
- 	int (*drawctxt_create) (struct kgsl_device *device,
- 		struct kgsl_pagetable *pagetable, struct kgsl_context *context,
- 		uint32_t flags);
- 	void (*drawctxt_destroy) (struct kgsl_device *device,
- 		struct kgsl_context *context);
-  long (*ioctl) (struct kgsl_device_private *dev_priv,
-+ 		unsigned int cmd, void *data);
+	/* Mandatory functions - these functions must be implemented
+	   by the client device.  The driver will not check for a NULL
+	   pointer before calling the hook.
+	 */
+	void (*regread) (struct kgsl_device *device,
+		unsigned int offsetwords, unsigned int *value);
+	void (*regwrite) (struct kgsl_device *device,
+		unsigned int offsetwords, unsigned int value);
+	int (*idle) (struct kgsl_device *device, unsigned int timeout);
+	unsigned int (*isidle) (struct kgsl_device *device);
+	int (*suspend_context) (struct kgsl_device *device);
+	int (*start) (struct kgsl_device *device, unsigned int init_ram);
+	int (*stop) (struct kgsl_device *device);
+	int (*getproperty) (struct kgsl_device *device,
+		enum kgsl_property_type type, void *value,
+		unsigned int sizebytes);
+	int (*waittimestamp) (struct kgsl_device *device,
+		unsigned int timestamp, unsigned int msecs);
+	unsigned int (*readtimestamp) (struct kgsl_device *device,
+		enum kgsl_timestamp_type type);
+	int (*issueibcmds) (struct kgsl_device_private *dev_priv,
+		struct kgsl_context *context, struct kgsl_ibdesc *ibdesc,
+		unsigned int sizedwords, uint32_t *timestamp,
+		unsigned int flags);
+	int (*setup_pt)(struct kgsl_device *device,
+		struct kgsl_pagetable *pagetable);
+	int (*cleanup_pt)(struct kgsl_device *device,
+		struct kgsl_pagetable *pagetable);
+	void (*power_stats)(struct kgsl_device *device,
+		struct kgsl_power_stats *stats);
+	/* Optional functions - these functions are not mandatory.  The
+	   driver will check that the function pointer is not NULL before
+	   calling the hook */
+	void (*setstate) (struct kgsl_device *device, uint32_t flags);
+	int (*drawctxt_create) (struct kgsl_device *device,
+		struct kgsl_pagetable *pagetable, struct kgsl_context *context,
+		uint32_t flags);
+	void (*drawctxt_destroy) (struct kgsl_device *device,
+		struct kgsl_context *context);
+	long (*ioctl) (struct kgsl_device_private *dev_priv,
+		unsigned int cmd, void *data);
 };
 
 struct kgsl_memregion {
-	unsigned char  *mmio_virt_base;
-	unsigned int   mmio_phys_base;
-	uint32_t      gpu_base;
-	unsigned int   sizebytes;
+	unsigned char *mmio_virt_base;
+	unsigned int mmio_phys_base;
+	uint32_t gpu_base;
+	unsigned int sizebytes;
 };
 
 struct kgsl_device {
@@ -136,13 +129,13 @@ struct kgsl_device {
 	const char *name;
 	unsigned int ver_major;
 	unsigned int ver_minor;
-	uint32_t       flags;
-	enum kgsl_deviceid    id;
+	uint32_t flags;
+	enum kgsl_deviceid id;
 	struct kgsl_memregion regspace;
 	struct kgsl_memdesc memstore;
 	const char *iomemname;
 
-	struct kgsl_mmu 	  mmu;
+	struct kgsl_mmu mmu;
 	struct completion hwaccess_gate;
 	const struct kgsl_functable *ftbl;
 	struct work_struct idle_check_ws;
@@ -152,8 +145,8 @@ struct kgsl_device {
 
 	struct atomic_notifier_head ts_notifier_list;
 	struct mutex mutex;
-	uint32_t		state;
-	uint32_t		requested_state;
+	uint32_t state;
+	uint32_t requested_state;
 
 	struct list_head memqueue;
 	unsigned int active_cnt;
@@ -210,18 +203,6 @@ struct kgsl_process_private {
 struct kgsl_device_private {
 	struct kgsl_device *device;
 	struct kgsl_process_private *process_priv;
-};
-
-struct kgsl_devconfig {
-	struct kgsl_memregion regspace;
-
-	unsigned int     mmu_config;
-	uint32_t        mpu_base;
-	int              mpu_range;
-	uint32_t        va_base;
-	unsigned int     va_range;
-
-	struct kgsl_memregion gmemspace;
 };
 
 struct kgsl_power_stats {
@@ -320,4 +301,4 @@ int kgsl_device_platform_probe(struct kgsl_device *device,
 		irqreturn_t (*dev_isr) (int, void*));
 void kgsl_device_platform_remove(struct kgsl_device *device);
 
-#endif  /* _KGSL_DEVICE_H */
+#endif  /* __KGSL_DEVICE_H */

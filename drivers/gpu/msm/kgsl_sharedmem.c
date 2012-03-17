@@ -10,19 +10,12 @@
  * GNU General Public License for more details.
  *
  */
-#include <linux/io.h>
-#include <linux/spinlock.h>
-#include <linux/genalloc.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/memory_alloc.h>
 #include <asm/cacheflush.h>
 
-#include "kgsl_sharedmem.h"
-#include "kgsl_device.h"
 #include "kgsl.h"
-#include "kgsl_log.h"
+#include "kgsl_sharedmem.h"
 #include "kgsl_cffdump.h"
 #include "kgsl_device.h"
 

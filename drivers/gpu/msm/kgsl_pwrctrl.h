@@ -26,16 +26,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _GSL_PWRCTRL_H
-#define _GSL_PWRCTRL_H
-
-#include <linux/types.h>
-#include <linux/wait.h>
-#include <linux/clk.h>
-#include <linux/mutex.h>
-#include <mach/clk.h>
-#include <mach/internal_power_rail.h>
-#include <linux/pm_qos_params.h>
+#ifndef _KGSL_PWRCTRL_H
+#define _KGSL_PWRCTRL_H
 
 /*****************************************************************************
 ** power flags
@@ -72,7 +64,6 @@ struct kgsl_pwrctrl {
 	const char *regulator_name;
 	const char *irq_name;
 	const char *src_clk_name;
-	bool pwrrail_first;
 	s64 time;
 };
 
@@ -99,4 +90,4 @@ static inline unsigned long kgsl_get_clkrate(struct clk *clk)
 	return (clk != NULL) ? clk_get_rate(clk) : 0;
 }
 
-#endif /* _GSL_PWRCTRL_H */
+#endif /* _KGSL_PWRCTRL_H */

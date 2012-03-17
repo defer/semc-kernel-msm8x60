@@ -26,10 +26,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef __GSL_MMU_H
-#define __GSL_MMU_H
-#include <linux/types.h>
-#include <linux/msm_kgsl.h>
+#ifndef __KGSL_MMU_H
+#define __KGSL_MMU_H
 
 /* Identifier for the global page table */
 /* Per process page tables will probably pass in the thread group
@@ -79,6 +77,11 @@
 #define KGSL_MMUFLAGS_TLBFLUSH         0x10000000
 #define KGSL_MMUFLAGS_PTUPDATE         0x20000000
 
+#define MH_INTERRUPT_MASK__AXI_READ_ERROR                  0x00000001L
+#define MH_INTERRUPT_MASK__AXI_WRITE_ERROR                 0x00000002L
+#define MH_INTERRUPT_MASK__MMU_PAGE_FAULT                  0x00000004L
+
+
 /* Macros to manage TLB flushing */
 #define GSL_TLBFLUSH_FILTER_ENTRY_NUMBITS     (sizeof(unsigned char) * 8)
 #define GSL_TLBFLUSH_FILTER_GET(superpte)			     \
@@ -96,15 +99,6 @@
 
 
 struct kgsl_device;
-
-struct kgsl_ptstats {
-	int64_t  maps;
-	int64_t  unmaps;
-	int64_t  superpteallocs;
-	int64_t  superptefrees;
-	int64_t  ptswitches;
-	int64_t  tlbflushes[KGSL_DEVICE_MAX];
-};
 
 struct kgsl_tlbflushfilter {
 	unsigned int *base;
@@ -282,8 +276,4 @@ static inline unsigned int kgsl_pt_get_flags(struct kgsl_pagetable *pt,
 	return result;
 }
 
-int kgsl_mmu_querystats(struct kgsl_pagetable *pagetable,
-			struct kgsl_ptstats *stats);
-
-
-#endif /* __GSL_MMU_H */
+#endif /* __KGSL_MMU_H */

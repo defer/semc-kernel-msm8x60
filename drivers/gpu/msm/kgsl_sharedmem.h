@@ -1,4 +1,4 @@
-/* Copyright (c) 2002,2007-2010, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2002,2007-2011, Code Aurora Forum. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -26,8 +26,8 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef __GSL_SHAREDMEM_H
-#define __GSL_SHAREDMEM_H
+#ifndef __KGSL_SHAREDMEM_H
+#define __KGSL_SHAREDMEM_H
 
 #include <linux/dma-mapping.h>
 
@@ -37,8 +37,6 @@ struct kgsl_process_private;
 #define KGSL_CACHE_OP_INV       0x01
 #define KGSL_CACHE_OP_FLUSH     0x02
 #define KGSL_CACHE_OP_CLEAN     0x03
-
-/** memdesc->priv flags */
 
 /** Set if the memdesc describes cached memory */
 #define KGSL_MEMFLAGS_CACHED    0x00000001
@@ -129,4 +127,4 @@ kgsl_allocate_contiguous(struct kgsl_memdesc *memdesc, size_t size)
 	return ret;
 }
 
-#endif /* __GSL_SHAREDMEM_H */
+#endif /* __KGSL_SHAREDMEM_H */

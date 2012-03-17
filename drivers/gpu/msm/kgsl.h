@@ -26,13 +26,14 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _GSL_DRIVER_H
-#define _GSL_DRIVER_H
+#ifndef __KGSL_H
+#define __KGSL_H
 
 #include <linux/types.h>
 #include <linux/msm_kgsl.h>
 #include <linux/platform_device.h>
 #include <linux/clk.h>
+#include <linux/interrupt.h>
 #include <linux/mutex.h>
 #include <linux/cdev.h>
 #include <linux/regulator/consumer.h>
@@ -51,9 +52,6 @@
 /*cache coherency ops */
 #define DRM_KGSL_GEM_CACHE_OP_TO_DEV	0x0001
 #define DRM_KGSL_GEM_CACHE_OP_FROM_DEV	0x0002
-
-#define KGSL_NUM_2D_DEVICES 2
-#define IDX_2D(X) ((X)-KGSL_DEVICE_2D0)
 
 /* The size of each entry in a page table */
 #define KGSL_PAGETABLE_ENTRY_SIZE  4
@@ -96,11 +94,11 @@ struct kgsl_device;
 
 struct kgsl_ptpool {
 	size_t ptsize;
- 	struct mutex lock;
- 	struct list_head list;
- 	int entries;
- 	int static_entries;
- 	int chunks;
+	struct mutex lock;
+	struct list_head list;
+	int entries;
+	int static_entries;
+	int chunks;
 };
 
 struct kgsl_driver {
@@ -135,13 +133,10 @@ struct kgsl_driver {
 		unsigned int vmalloc_max;
 		unsigned int coherent;
 		unsigned int coherent_max;
-    unsigned int mapped;
-    unsigned int mapped_max;
+		unsigned int mapped;
+		unsigned int mapped_max;
 		unsigned int histogram[16];
 	} stats;
-
-	struct work_struct idle_callback_work;
-	void (*idle_callback)(int idle);
 };
 
 extern struct kgsl_driver kgsl_driver;
@@ -151,16 +146,16 @@ extern struct kgsl_driver kgsl_driver;
 
 struct kgsl_pagetable;
 struct kgsl_memdesc_ops;
- 
+
 /* shared memory allocation */
 struct kgsl_memdesc {
- 	struct kgsl_pagetable *pagetable;
- 	void *hostptr;
- 	unsigned int gpuaddr;
- 	unsigned int physaddr;
- 	unsigned int size;
- 	unsigned int priv;
- 	struct kgsl_memdesc_ops *ops;
+	struct kgsl_pagetable *pagetable;
+	void *hostptr;
+	unsigned int gpuaddr;
+	unsigned int physaddr;
+	unsigned int size;
+	unsigned int priv;
+	struct kgsl_memdesc_ops *ops;
 };
 
 struct kgsl_mem_entry {
@@ -187,8 +182,6 @@ uint8_t *kgsl_gpuaddr_to_vaddr(const struct kgsl_memdesc *memdesc,
 struct kgsl_mem_entry *kgsl_sharedmem_find_region(
 	struct kgsl_process_private *private, unsigned int gpuaddr,
 	size_t size);
-uint8_t *kgsl_sharedmem_convertaddr(struct kgsl_device *device,
-	unsigned int pt_base, unsigned int gpuaddr, unsigned int *size);
 
 extern const struct dev_pm_ops kgsl_pm_ops;
 
@@ -241,4 +234,4 @@ kgsl_mem_entry_put(struct kgsl_mem_entry *entry)
 	kref_put(&entry->refcount, kgsl_mem_entry_destroy);
 }
 
-#endif /* _GSL_DRIVER_H */
+#endif /* __KGSL_H */
