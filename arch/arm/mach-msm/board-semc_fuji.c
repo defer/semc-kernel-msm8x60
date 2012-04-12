@@ -1718,10 +1718,10 @@ static struct msm_i2c_ssbi_platform_data msm_ssbi3_pdata = {
 #define MSM_FB_SIZE roundup(MSM_FB_PRIM_BUF_SIZE + MSM_FB_EXT_BUF_SIZE + \
 				MSM_FB_WRITEBACK_SIZE + \
 				MSM_FB_DSUB_PMEM_ADDER, 4096)
-#define MSM_PMEM_SF_SIZE 0x4000000 /* 64 Mbytes */
+#define MSM_PMEM_SF_SIZE 0x4600000 /* 70 Mbytes */
 
-#define MSM_PMEM_KERNEL_EBI1_SIZE  0x600000
-#define MSM_PMEM_ADSP_SIZE         0x1000000
+#define MSM_PMEM_KERNEL_EBI1_SIZE  0x700000
+#define MSM_PMEM_ADSP_SIZE         0x2000000
 #define MSM_PMEM_CAMERA_SIZE       0x5000000
 #define MSM_PMEM_AUDIO_SIZE        0x239000
 #define MSM_PMEM_SWIQI_SIZE        0x2000000
