@@ -67,7 +67,7 @@ struct mdp4_overlay_ctrl {
 				.share = 1,	/* VG 2 */
 			},
 		},
-	.cscontroller = CS_CONTROLLER_0,
+	.cs_controller = CS_CONTROLLER_0,
 	.plist = {
 		{
 			.pipe_type = OVERLAY_TYPE_RGB,

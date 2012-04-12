@@ -1,4 +1,4 @@
-include/linux/usb/otg.h/*
+/*
  * Gadget Function Driver for MTP
  *
  * Copyright (C) 2010 Google, Inc.

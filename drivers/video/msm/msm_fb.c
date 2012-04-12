@@ -2835,6 +2835,7 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 		ret = msmfb_overlay_play_enable(info, argp);
 		up(&msm_fb_ioctl_ppp_sem);
 		break;
+#if 0
 	case MSMFB_OVERLAY_BLT:
 		down(&msm_fb_ioctl_ppp_sem);
 		ret = msmfb_overlay_blt(info, argp);
@@ -2845,6 +2846,7 @@ static int msm_fb_ioctl(struct fb_info *info, unsigned int cmd,
 		ret = msmfb_overlay_blt_off(info, argp);
 		up(&msm_fb_ioctl_ppp_sem);
 		break;
+#endif
 	case MSMFB_OVERLAY_3D:
 		down(&msm_fb_ioctl_ppp_sem);
 		ret = msmfb_overlay_3d_sbys(info, argp);
