@@ -1718,10 +1718,10 @@ static struct msm_i2c_ssbi_platform_data msm_ssbi3_pdata = {
 #define MSM_FB_SIZE roundup(MSM_FB_PRIM_BUF_SIZE + MSM_FB_EXT_BUF_SIZE + \
 				MSM_FB_WRITEBACK_SIZE + \
 				MSM_FB_DSUB_PMEM_ADDER, 4096)
-#define MSM_PMEM_SF_SIZE 0x4600000 /* 70 Mbytes */
+#define MSM_PMEM_SF_SIZE 0x4000000 /* 64 Mbytes */
 
 #define MSM_PMEM_KERNEL_EBI1_SIZE  0x700000
-#define MSM_PMEM_ADSP_SIZE         0x2000000
+#define MSM_PMEM_ADSP_SIZE         0x3000000 /* 48 MB */
 #define MSM_PMEM_CAMERA_SIZE       0x5000000
 #define MSM_PMEM_AUDIO_SIZE        0x239000
 #define MSM_PMEM_SWIQI_SIZE        0x2000000
@@ -1733,7 +1733,7 @@ static struct msm_i2c_ssbi_platform_data msm_ssbi3_pdata = {
 /* SMI PMEM Region, as the video core will use offset address */
 /* from the Firmware base */
 #define PMEM_KERNEL_SMI_BASE  (MSM_SMI_BASE)
-#define PMEM_KERNEL_SMI_SIZE  0x600000
+#define PMEM_KERNEL_SMI_SIZE  0xc00000
 /* User space SMI PMEM Region for video core*/
 /* used for encoder, decoder input & output buffers  */
 #define MSM_PMEM_SMIPOOL_BASE (PMEM_KERNEL_SMI_BASE + PMEM_KERNEL_SMI_SIZE)
