@@ -1113,10 +1113,6 @@ static void synaptics_funcarea_initialize(struct synaptics_clearpad *this)
 					0, SYNAPTICS_MAX_Z_VALUE, 0, 0);
 			input_set_abs_params(this->input, ABS_MT_WIDTH_MAJOR,
 					0, SYNAPTICS_MAX_W_VALUE + 1, 0, 0);
-			input_set_abs_params(this->input, ABS_MT_WIDTH_MINOR,
-					0, SYNAPTICS_MAX_W_VALUE + 1, 0, 0);
-			input_set_abs_params(this->input, ABS_MT_ORIENTATION,
-					0, 1, 0, 0);
 			break;
 		case SYN_FUNCAREA_BUTTON:
 			button = (struct synaptics_button *)funcarea->data;
@@ -1209,7 +1205,6 @@ static void synaptics_funcarea_down(struct synaptics_clearpad *this,
 		input_report_abs(this->input, ABS_MT_POSITION_Y, cur->y);
 		input_report_abs(this->input, ABS_MT_TOUCH_MAJOR, touch_major);
 		input_report_abs(this->input, ABS_MT_WIDTH_MAJOR, width_major);
-		input_report_abs(this->input, ABS_MT_WIDTH_MINOR, width_minor);
 		input_report_abs(this->input, ABS_MT_ORIENTATION,
 				 (cur->wx > cur->wy));
 		input_mt_sync(this->input);
@@ -1232,12 +1227,6 @@ static void synaptics_funcarea_up(struct synaptics_clearpad *this,
 
 	switch (pointer->funcarea->func) {
 	case SYN_FUNCAREA_POINTER:
-		LOG_EVENT(this, "pointer up\n");
-		input_report_abs(this->input, ABS_MT_POSITION_X,
-				 pointer->cur.x);
-		input_report_abs(this->input, ABS_MT_POSITION_Y,
-				 pointer->cur.y);
-		input_report_abs(this->input, ABS_MT_TOUCH_MAJOR, 0);
 		input_mt_sync(this->input);
 		break;
 	case SYN_FUNCAREA_BUTTON:
@@ -1849,7 +1838,6 @@ static int synaptics_clearpad_input_init(struct synaptics_clearpad *this)
 	set_bit(ABS_MT_TOUCH_MAJOR, this->input->absbit);
 	set_bit(ABS_MT_TOUCH_MINOR, this->input->absbit);
 	set_bit(ABS_MT_WIDTH_MAJOR, this->input->absbit);
-	set_bit(ABS_MT_WIDTH_MINOR, this->input->absbit);
 
 	dev_info(&this->pdev->dev, "Touch area [%d, %d, %d, %d]\n",
 		 this->extents.x_min, this->extents.y_min,
